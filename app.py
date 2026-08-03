@@ -423,7 +423,7 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     4. Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu':
         Ajuste o nível de maneira que os estudantes possuam muita dificuldade para {ano_escolar}, 
         pois se trata de um contexto de escola pública do interior do Rio de Janeiro, com salas de aula super lotadas e estudantes com
-        pouco interesse e um contexto familiar complicado.
+        pouco interesse e um contexto familiar delicado.
 
     Siga ESTRITAMENTE a estrutura abaixo:
 
