@@ -253,7 +253,6 @@ def _renderizar_tokens(pdf: FPDF, renderer: TextRenderer, texto: str):
 
 
 # ── CLASSE PDF ────────────────────────────────────────────────────────────────
-# ── CLASSE PDF ────────────────────────────────────────────────────────────────
 class PDFMaterial(FPDF):
     def __init__(self, disciplina: str, ano_escolar: str, assunto: str):
         super().__init__()
