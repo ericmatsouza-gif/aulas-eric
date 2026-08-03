@@ -492,7 +492,6 @@ nivel_dificuldade = st.selectbox(
         "Prefeitura Municipal de Casimiro de Abreu",
     ],
 )
-
 for chave in ("conteudo_md", "ultima_disciplina", "ultimo_ano", "ultimo_assunto", "ultimo_nivel"):
     if chave not in st.session_state:
         st.session_state[chave] = None if chave == "conteudo_md" else ""
@@ -522,7 +521,7 @@ if st.button("✨ Gerar Material Didático"):
             
             st.success("✅ Material gerado com sucesso!")
             
-       except APIError as e:
+        except APIError as e:
             erro_str = str(e)
             
             # Tratamento do erro de Cota Excedida / Rate Limit (429)
