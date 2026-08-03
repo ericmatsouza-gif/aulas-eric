@@ -391,8 +391,10 @@ def get_gemini_client(api_key: str) -> genai.Client:
 
 
 def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
-                       assunto: str, codigo_bncc: str = "") -> str:
+                       assunto: str, nivel_dificuldade: str = "Intermediário",
+                       codigo_bncc: str = "") -> str:
     bncc_str = f"com referência à BNCC: {codigo_bncc}" if codigo_bncc else ""
+                           
     prompt = f""" 
     Você é um professor especialista em Didática sob o referencial da
     PEDAGOGIA HISTÓRICO-CRÍTICA e da TEORIA GRAMSCIANA DA HEGEMONIA.
@@ -402,7 +404,10 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     - Ano/Série: {ano_escolar}
     - Conteúdo/Assunto: {assunto}
     {codigo_bncc}
-
+    -Nível de dificuldade do material:  {nivel_dificuldade}
+        - Ajuste a profundidade dos conceitos, a complexidade dos problemas e a linguagem pedagógica para o nível {nivel_dificuldade}.
+        - Se {nivel_dificuldade} == Prefeitura Municipal de Casimiro de Abreu: o nível é abaixo do básico.
+        
     ORIENTAÇÃO PEDAGÓGICO-POLÍTICA OBRIGATÓRIA:
     1. O conhecimento científico/escolar deve ser tratado como um saber sistematizado, produzido
        historicamente pela humanidade para responder a necessidades concretas de sobrevivência,
@@ -483,7 +488,6 @@ codigo_bncc = st.text_input("🎯 BNCC (opcional)")
 for chave in ("conteudo_md", "ultima_disciplina", "ultimo_ano", "ultimo_assunto"):
     if chave not in st.session_state:
         st.session_state[chave] = None if chave == "conteudo_md" else ""
-
 if st.button("✨ Gerar Material Didático"):
     if not api_key or not disciplina or not ano_escolar or not assunto:
         st.warning("Preencha todos os campos obrigatórios.")
@@ -492,7 +496,12 @@ if st.button("✨ Gerar Material Didático"):
             with st.spinner("🧠 Elaborando material (Gemini Flash)..."):
                 client = get_gemini_client(api_key)
                 st.session_state.conteudo_md = gerar_conteudo_phc(
-                    client, disciplina, ano_escolar, assunto, codigo_bncc
+                    client,
+                    disciplina,
+                    ano_escolar,
+                    assunto,
+                    nivel_dificuldade,
+                    codigo_bncc,
                 )
                 st.session_state.ultima_disciplina = disciplina
                 st.session_state.ultimo_ano = ano_escolar
