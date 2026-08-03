@@ -320,7 +320,12 @@ def compilar_pdf(texto_md: str, disciplina: str,
 
         # H1
         if s.startswith("# "):
-            pdf.ln(4)
+            # Força a quebra de página se for o Gabarito
+            if "GABARITO COMENTADO" in s.upper():
+                pdf.add_page()
+            else:
+                pdf.ln(4)
+
             pdf.set_fill_color(41, 128, 185)
             set_fonte(bold=True, size=11)
             pdf.set_text_color(255, 255, 255)
