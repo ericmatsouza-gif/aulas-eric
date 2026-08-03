@@ -522,13 +522,22 @@ if st.button("✨ Gerar Material Didático"):
             
             st.success("✅ Material gerado com sucesso!")
             
-        except APIError as e:
-            if "503" in str(e) or "unavailable" in str(e).lower():
-                st.error("⚠️ Servidor ocupado. Tente novamente em alguns segundos.")
+       except APIError as e:
+            erro_str = str(e)
+            
+            # Tratamento do erro de Cota Excedida / Rate Limit (429)
+            if "429" in erro_str or "RESOURCE_EXHAUSTED" in erro_str:
+                st.warning(
+                    "⏳ **Cota de requisições atingida!**\n\n"
+                    "O serviço gratuito do Gemini atingiu o limite temporário. "
+                    "Aguarde cerca de 10 a 15 segundos e clique em **Gerar Material Didático** novamente."
+                )
+            # Tratamento de instabilidade no servidor (503)
+            elif "503" in erro_str or "unavailable" in erro_str.lower():
+                st.error("⚠️ O servidor do Gemini está temporariamente ocupado. Tente novamente em instantes.")
+            # Outros erros da API
             else:
-                st.error(f"❌ Erro na API Gemini: {e}")
-        except Exception as e:
-            st.error(f"❌ Erro inesperado: {e}")
+                st.error(f"❌ Ocorreu um problema ao se comunicar com a API: {e.message if hasattr(e, 'message') else e}")
 
 if st.session_state.conteudo_md:
     st.divider()
