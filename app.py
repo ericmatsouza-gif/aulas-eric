@@ -484,10 +484,21 @@ with col_ano:
 
 assunto = st.text_input("Assunto", placeholder="Ex: Potenciação")
 codigo_bncc = st.text_input("🎯 BNCC (opcional)")
+nivel_dificuldade = st.selectbox(
+    "Nível de Dificuldade",
+    [
+        "Básico",
+        "Intermediário",
+        "Avançado",
+        "Prefeitura Municipal de Casimiro de Abreu",
+    ],
+)
 
-for chave in ("conteudo_md", "ultima_disciplina", "ultimo_ano", "ultimo_assunto"):
+for chave in ("conteudo_md", "ultima_disciplina", "ultimo_ano", "ultimo_assunto", "ultimo_nivel"):
     if chave not in st.session_state:
         st.session_state[chave] = None if chave == "conteudo_md" else ""
+
+# 2. Ação do Botão
 if st.button("✨ Gerar Material Didático"):
     if not api_key or not disciplina or not ano_escolar or not assunto:
         st.warning("Preencha todos os campos obrigatórios.")
@@ -496,17 +507,22 @@ if st.button("✨ Gerar Material Didático"):
             with st.spinner("🧠 Elaborando material (Gemini Flash)..."):
                 client = get_gemini_client(api_key)
                 st.session_state.conteudo_md = gerar_conteudo_phc(
-                    client,
-                    disciplina,
-                    ano_escolar,
-                    assunto,
-                    nivel_dificuldade,
-                    codigo_bncc,
+                    client=client,
+                    disciplina=disciplina,
+                    ano_escolar=ano_escolar,
+                    assunto=assunto,
+                    nivel_dificuldade=nivel_dificuldade,
+                    codigo_bncc=codigo_bncc,
                 )
-                st.session_state.ultima_disciplina = disciplina
-                st.session_state.ultimo_ano = ano_escolar
-                st.session_state.ultimo_assunto = assunto
+            
+            # Persiste os valores gerados no session_state
+            st.session_state.ultima_disciplina = disciplina
+            st.session_state.ultimo_ano = ano_escolar
+            st.session_state.ultimo_assunto = assunto
+            st.session_state.ultimo_nivel = nivel_dificuldade
+            
             st.success("✅ Material gerado com sucesso!")
+            
         except APIError as e:
             if "503" in str(e) or "unavailable" in str(e).lower():
                 st.error("⚠️ Servidor ocupado. Tente novamente em alguns segundos.")
