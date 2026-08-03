@@ -420,6 +420,10 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
        REALIDADE, capacitando os sujeitos (especialmente das classes populares) para o AUTOGOVERNO,
        a interpretação da sociedade e a tomada de decisão autônoma.
     3. Rompa com a dualidade do ensino: entregue RIGOR TÉCNICO-CIENTÍFICO unido à CONSCIÊNCIA CRÍTICA.
+    4. Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu':
+        Ajuste o nível de maneira que os estudantes possuam muita dificuldade para {ano_escolar}, 
+        pois se trata de um contexto de escola pública do interior do Rio de Janeiro, com salas de aula super lotadas e estudantes com
+        pouco interesse e um contexto familiar complicado.
 
     Siga ESTRITAMENTE a estrutura abaixo:
 
