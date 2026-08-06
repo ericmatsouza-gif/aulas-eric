@@ -444,6 +444,7 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
 
 
 REGRAS RIGOROSAS DE FORMATAÇÃO (PROIBIÇÕES E OBRIGAÇÕES):
+- NUNCA deixe explicito, a palavra 'autogoverno', 'pedagogia histórico-crítica' e 'escola pública'
 - NUNCA use blocos de código (triplas crases ```) para formatar texto, exemplos ou matemática.
 - NUNCA escreva notação matemática solta no texto como 3^0, 3^1, x^2. Use SEMPRE a notação LaTeX embutida: $3^0$, $3^1$, $x^2$.
 - Para exibições em listas ou passos organizados, use listas comuns do Markdown (com traço "-") e insira as variáveis/expressões em LaTeX. Exemplo:
