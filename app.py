@@ -548,19 +548,39 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
 with st.sidebar:
     st.title("Sobre o Autor")
     st.markdown("**Prof. Me. Eric Souza da Silva**")
-    st.caption("""Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ).
 
-Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).
+    st.markdown(
+        """
+        <div style="
+            background-color: rgba(128, 128, 128, 0.12);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: justify;
+            line-height: 1.5;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            margin-bottom: 15px;
+        ">
+        Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ).
 
-Atua em Educação Matemática, Tecnologias Digitais no Ensino, História da Educação Matemática, Políticas Públicas, Educação Ambiental e Esquemas Colaborativos na Educação.""")
-    
+        <br><br>
+
+        Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).
+
+        <br><br>
+
+        Atua em Educação Matemática, Tecnologias Digitais no Ensino, História da Educação Matemática, Políticas Públicas, Educação Ambiental e Esquemas Colaborativos na Educação.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
     st.divider()
-    
+
     st.markdown("### 📞 Contato & Suporte")
     st.markdown("📧 **E-mail:** [ericmatsouza@gmail.com](mailto:ericmatsouza@gmail.com)")
     st.markdown("💬 **WhatsApp:** [(21) 97048-1891](https://wa.me/5521970481891)")
-    
-    # A gracinha sobre o PIX no WhatsApp 😉
+
     st.info(
         "💡 **Dica do Prof:** O número do WhatsApp também funciona como **Chave PIX**! "
         "Se o gerador te economizou horas de planejamento, o café virtual é sempre bem-vindo! ☕😉"
