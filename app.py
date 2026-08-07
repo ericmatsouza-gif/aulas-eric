@@ -72,12 +72,17 @@ section[data-testid="stSidebar"] > div {
 
 /* ===== REDUZ ESPAÇO NO TOPO ===== */
 section[data-testid="stSidebar"] .block-container {
-    padding-top: -2rem !important;
+    padding-top: 0 !important;
 }
 
 /* ===== SOBE O "SOBRE O AUTOR" ===== */
 section[data-testid="stSidebar"] h1:first-of-type {
     margin-top: -5rem !important;
+}
+
+/* ===== AJUSTE DO CONTEÚDO APÓS "SOBRE O AUTOR" ===== */
+.author-name-sidebar {
+    margin-top: -0.8rem;
 }
 
 </style>
@@ -596,7 +601,10 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("Sobre o Autor")
-    st.markdown("**Prof. Me. Eric Souza da Silva**")
+    st.markdown(
+    '<div class="author-name-sidebar"><strong>Prof. Me. Eric Souza da Silva</strong></div>',
+    unsafe_allow_html=True
+)
 
     st.markdown(
         """
