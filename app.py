@@ -82,7 +82,7 @@ section[data-testid="stSidebar"] h1:first-of-type {
 
 /* ===== AJUSTE DO CONTEÚDO APÓS "SOBRE O AUTOR" ===== */
 .author-name-sidebar {
-    margin-top: -0.8rem;
+    margin-top: -2rem;
 }
 
 </style>
