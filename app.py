@@ -1,4 +1,4 @@
-# FUNCIONA
+# FUNCIONA - v2 com abas: Aula + Exercícios
 import os
 import re
 import io
@@ -55,7 +55,6 @@ CODECOGS_URL = "https://latex.codecogs.com/png.image?"
 
 
 def latex_para_png(expr: str, dpi: int = 110) -> bytes | None:
-    """Baixa PNG da expressão LaTeX via Codecogs com DPI ajustado para fonte 10pt."""
     params = f"\\dpi{{{dpi}}}\\bg{{white}}{expr}"
     try:
         resp = requests.get(CODECOGS_URL + requests.utils.quote(params), timeout=8)
@@ -67,9 +66,6 @@ def latex_para_png(expr: str, dpi: int = 110) -> bytes | None:
 
 
 def inserir_imagem_latex(pdf: FPDF, png_bytes: bytes, is_display: bool):
-    """
-    Insere PNG LaTeX preservando a linha de base ou forçando quebra em fórmulas de bloco (display).
-    """
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
         tmp.write(png_bytes)
         tmp_path = tmp.name
@@ -79,45 +75,29 @@ def inserir_imagem_latex(pdf: FPDF, png_bytes: bytes, is_display: bool):
         with PILImage.open(io.BytesIO(png_bytes)) as img:
             w_px, h_px = img.size
 
-        px_to_mm = 0.22  # Conversão para DPI 110
+        px_to_mm = 0.22
 
         if is_display:
             h = min(h_px * px_to_mm, 12.0)
             w = h * (w_px / h_px)
-
-            # Força a quebra de linha e vai para a margem esquerda antes do bloco
             pdf.ln(6.5)
             pdf.set_x(pdf.l_margin)
-
             x_centro = pdf.l_margin + (pdf.epw - w) / 2
             pdf.image(tmp_path, x=x_centro, y=pdf.get_y(), h=h, w=w)
-
-            # Avança a altura da imagem + espaçamento e reseta o X
             pdf.set_y(pdf.get_y() + h + 3)
             pdf.set_x(pdf.l_margin)
         else:
-            # Salva o Y original da linha antes de inserir a imagem inline
             y_base = pdf.get_y()
-
-            # Espaçamento de guarda antes da imagem
             pdf.set_x(pdf.get_x() + 0.8)
-
             h = min(h_px * px_to_mm, 4.0)
             w = h * (w_px / h_px)
-
-            # Se a imagem extrapolar a margem direita, faz quebra de linha
             if pdf.get_x() + w > pdf.w - pdf.r_margin:
                 pdf.ln(6.5)
                 pdf.set_x(pdf.l_margin)
                 y_base = pdf.get_y()
-
-            # Posiciona verticalmente para alinhar com o centro do texto
             y_img = y_base + (6.5 - h) / 2
             x_img = pdf.get_x()
-
             pdf.image(tmp_path, x=x_img, y=y_img, h=h, w=w)
-
-            # Restaura exatamente a coordenada Y original da linha de texto
             pdf.set_xy(x_img + w + 1.2, y_base)
     finally:
         os.unlink(tmp_path)
@@ -125,17 +105,12 @@ def inserir_imagem_latex(pdf: FPDF, png_bytes: bytes, is_display: bool):
 
 # ── TOKENIZADOR ───────────────────────────────────────────────────────────────
 def tokenizar_linha(texto: str) -> list[dict]:
-    """
-    Divide uma linha em tokens (texto, display $$, inline $).
-    """
     tokens = []
     i = 0
     buf = ""
     n = len(texto)
 
     while i < n:
-
-        # ── Display $$...$$ ──────────────────────────────────────────────────
         if texto.startswith("$$", i):
             if buf:
                 tokens.append({"tipo": "texto", "conteudo": buf})
@@ -149,7 +124,6 @@ def tokenizar_linha(texto: str) -> list[dict]:
                 i += 1
             continue
 
-        # ── Inline $...$ ─────────────────────────────────────────────────────
         if texto[i] == "$":
             precedido = i > 0 and (texto[i - 1].isalpha() or texto[i - 1].isdigit())
             seguido_valido = (i + 1 < n) and texto[i + 1] not in (" ", "\t", "")
@@ -186,8 +160,6 @@ def tokenizar_linha(texto: str) -> list[dict]:
 
 # ── RENDERER DE TEXTO ─────────────────────────────────────────────────────────
 class TextRenderer:
-    """Renderiza texto puro tratando **negrito** e *itálico*, removendo marcadores e sanitizando caracteres."""
-
     def __init__(self, pdf: FPDF, font_name: str = "DejaVu", base_size: float = 10):
         self.pdf = pdf
         self.font_name = font_name
@@ -201,9 +173,7 @@ class TextRenderer:
             self.pdf.set_font("helvetica", style, self.base_size)
 
     def _encode(self, t: str) -> str:
-        # Substitui travessões longos (—) e médios (–) por hífen simples (-)
         t = t.replace("—", "-").replace("–", "-")
-
         if self.pdf.font_family.lower() == "helvetica":
             return t.encode("latin-1", "replace").decode("latin-1")
         return t
@@ -220,14 +190,11 @@ class TextRenderer:
             elif p == "*":
                 italic = not italic
                 continue
-
             if not p:
                 continue
-
             style = ""
             if bold: style += "B"
             if italic: style += "I"
-
             self._set(style)
             limpo = p.replace("*", "")
             if limpo:
@@ -238,7 +205,6 @@ class TextRenderer:
 
 # ── RENDERIZAÇÃO DE TOKENS ────────────────────────────────────────────────────
 def _renderizar_tokens(pdf: FPDF, renderer: TextRenderer, texto: str):
-    """Processa tokens de uma linha intercalando texto e imagens LaTeX."""
     tokens = tokenizar_linha(texto)
     for tok in tokens:
         if tok["tipo"] == "texto":
@@ -252,30 +218,27 @@ def _renderizar_tokens(pdf: FPDF, renderer: TextRenderer, texto: str):
                 renderer.write_span(tok["conteudo"])
 
 
-# ── CLASSE PDF ────────────────────────────────────────────────────────────────
-class PDFMaterial(FPDF):
-    def __init__(self, disciplina: str, ano_escolar: str, assunto: str):
+# ── CLASSE PDF BASE ───────────────────────────────────────────────────────────
+class PDFBase(FPDF):
+    def __init__(self, titulo_cabecalho: str, subtitulo_cabecalho: str):
         super().__init__()
-        self.disciplina = disciplina
-        self.ano_escolar = ano_escolar
-        self.assunto = assunto
+        self._titulo_cab = titulo_cabecalho
+        self._subtitulo_cab = subtitulo_cabecalho
         if FONT_DIR:
             self.add_font("DejaVu", style="", fname=os.path.join(FONT_DIR, "DejaVuSans.ttf"))
             self.add_font("DejaVu", style="B", fname=os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"))
             self.add_font("DejaVu", style="I", fname=os.path.join(FONT_DIR, "DejaVuSans-Oblique.ttf"))
 
     def header(self):
-        # Renderiza o cabeçalho APENAS na primeira página
         if self.page_no() == 1:
             fonte = "DejaVu" if FONT_DIR else "helvetica"
             self.set_font(fonte, "B", 12)
             self.set_text_color(26, 42, 58)
-            self.cell(0, 10, "PLANO DE AULA E MATERIAL DIDÁTICO",
+            self.cell(0, 10, self._titulo_cab,
                       align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             self.set_font(fonte, "B", 9)
             self.set_text_color(41, 128, 185)
-            self.cell(0, 5,
-                      f"{self.disciplina.upper()} | {self.ano_escolar} | Assunto: {self.assunto}",
+            self.cell(0, 5, self._subtitulo_cab,
                       align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             self.ln(2)
             self.set_draw_color(41, 128, 185)
@@ -291,10 +254,10 @@ class PDFMaterial(FPDF):
         self.cell(0, 10, f"Página {self.page_no()}/{'{nb}'}", align="R")
 
 
-# ── COMPILADOR PDF ────────────────────────────────────────────────────────────
-def compilar_pdf(texto_md: str, disciplina: str,
-                 ano_escolar: str, assunto: str) -> bytes:
-    pdf = PDFMaterial(disciplina, ano_escolar, assunto)
+# ── COMPILADOR PDF GENÉRICO ───────────────────────────────────────────────────
+def _compilar_pdf_generico(texto_md: str, titulo_cab: str, subtitulo_cab: str,
+                            marcador_nova_pagina: str = "GABARITO") -> bytes:
+    pdf = PDFBase(titulo_cab, subtitulo_cab)
     pdf.alias_nb_pages()
     pdf.set_margins(15, 20, 15)
     pdf.set_auto_page_break(auto=True, margin=20)
@@ -318,14 +281,11 @@ def compilar_pdf(texto_md: str, disciplina: str,
             pdf.ln(3)
             continue
 
-        # H1
         if s.startswith("# "):
-            # Força a quebra de página se for o Gabarito
-            if "GABARITO COMENTADO" in s.upper():
+            if marcador_nova_pagina and marcador_nova_pagina.upper() in s.upper():
                 pdf.add_page()
             else:
                 pdf.ln(4)
-
             pdf.set_fill_color(41, 128, 185)
             set_fonte(bold=True, size=11)
             pdf.set_text_color(255, 255, 255)
@@ -335,7 +295,6 @@ def compilar_pdf(texto_md: str, disciplina: str,
             pdf.ln(3)
             continue
 
-        # H2
         if s.startswith("## "):
             pdf.ln(3)
             set_fonte(bold=True, size=10.5)
@@ -346,7 +305,6 @@ def compilar_pdf(texto_md: str, disciplina: str,
             pdf.ln(2)
             continue
 
-        # H3/H4
         if re.match(r'^#{3,4}\s+', s):
             conteudo = re.sub(r'^#{3,4}\s+', '', s)
             pdf.ln(2)
@@ -356,7 +314,6 @@ def compilar_pdf(texto_md: str, disciplina: str,
             pdf.ln(1)
             continue
 
-        # Separador ---
         if re.match(r'^-{3,}$', s):
             pdf.ln(2)
             pdf.set_draw_color(200, 200, 200)
@@ -364,7 +321,6 @@ def compilar_pdf(texto_md: str, disciplina: str,
             pdf.ln(2)
             continue
 
-        # Lista: -, *, •, 1., a)
         match_list = re.match(r'^(\s*)([-•]|\d+\.|\w\))\s+', linha)
         if match_list:
             bullet = match_list.group(2)
@@ -378,7 +334,6 @@ def compilar_pdf(texto_md: str, disciplina: str,
             pdf.ln(renderer.lh + 1)
             continue
 
-        # Linha normal
         pdf.set_x(pdf.l_margin)
         pdf.set_text_color(44, 62, 80)
         set_fonte(bold=False, size=10)
@@ -388,18 +343,87 @@ def compilar_pdf(texto_md: str, disciplina: str,
     return bytes(pdf.output())
 
 
+def compilar_pdf(texto_md: str, disciplina: str, ano_escolar: str, assunto: str) -> bytes:
+    titulo = "PLANO DE AULA E MATERIAL DIDÁTICO"
+    subtitulo = f"{disciplina.upper()} | {ano_escolar} | Assunto: {assunto}"
+    return _compilar_pdf_generico(texto_md, titulo, subtitulo, marcador_nova_pagina="GABARITO COMENTADO")
+
+
+def compilar_pdf_exercicios(texto_md: str, disciplina: str,
+                             ano_escolar: str, assunto: str) -> bytes:
+    """PDF apenas com os exercícios (sem gabarito)."""
+    titulo = "LISTA DE EXERCÍCIOS"
+    subtitulo = f"{disciplina.upper()} | {ano_escolar} | Assunto: {assunto}"
+    # Remove tudo a partir do marcador de gabarito
+    separador = re.split(r'(?mi)^#{1,2}\s+.*GABARITO.*$', texto_md)
+    conteudo = separador[0].strip()
+    return _compilar_pdf_generico(conteudo, titulo, subtitulo, marcador_nova_pagina="")
+
+
+def compilar_pdf_gabarito(texto_md: str, disciplina: str,
+                           ano_escolar: str, assunto: str) -> bytes:
+    """PDF apenas com o gabarito comentado."""
+    titulo = "GABARITO COMENTADO"
+    subtitulo = f"{disciplina.upper()} | {ano_escolar} | Assunto: {assunto}"
+    # Extrai apenas a seção de gabarito
+    match = re.search(r'(?mi)^#{1,2}\s+.*GABARITO.*$', texto_md)
+    if match:
+        conteudo = texto_md[match.start():].strip()
+    else:
+        conteudo = texto_md
+    return _compilar_pdf_generico(conteudo, titulo, subtitulo, marcador_nova_pagina="")
+
+
 # ── GEMINI ────────────────────────────────────────────────────────────────────
 @st.cache_resource
 def get_gemini_client(api_key: str) -> genai.Client:
     return genai.Client(api_key=api_key)
 
 
+def _tratar_erro_api(e: Exception):
+    erro_str = str(e)
+    if "429" in erro_str or "RESOURCE_EXHAUSTED" in erro_str:
+        st.warning(
+            "⏳ **Cota de requisições atingida!**\n\n"
+            "O serviço gratuito do Gemini atingiu o limite temporário por minuto (RPM). "
+            "Aguarde cerca de 10 a 15 segundos e tente novamente."
+        )
+    elif "503" in erro_str or "unavailable" in erro_str.lower():
+        st.error("⚠️ O servidor do Gemini está temporariamente ocupado. Tente novamente em instantes.")
+    else:
+        st.error(f"❌ Erro: {e}")
+
+
+REGRAS_FORMATACAO = """
+REGRAS RIGOROSAS DE FORMATAÇÃO (PROIBIÇÕES E OBRIGAÇÕES):
+- NUNCA use blocos de código (triplas crases ```) para formatar texto, exemplos ou matemática.
+- NUNCA escreva notação matemática solta no texto como 3^0, 3^1, x^2. Use SEMPRE a notação LaTeX embutida: $3^0$, $3^1$, $x^2$.
+- Para exibições em listas ou passos organizados, use listas comuns do Markdown (com traço "-") e insira as variáveis/expressões em LaTeX.
+- Use LaTeX ($...$) para QUALQUER variável, expressão, fórmula, igualdade ou notação de potência/radiciação no texto.
+- Expressões matemáticas em destaque (fórmulas, equações em bloco próprio): $$expressão$$
+- Use notação LaTeX padrão: \\frac{num}{den}, \\sqrt{x}, \\sqrt[3]{x}, x^{2}, \\cdot, \\pm, \\leq, \\geq
+- NUNCA coloque números isolados ou texto simples dentro de $ (escreva "3 voltas", "4 lados" normalmente como texto).
+- NÃO use $ para indicar moeda (escreva "reais", "R$" com espaço após o símbolo, ou "BRL").
+- Negrito para termos importantes: **termo**.
+- Texto corrido em português fora dos delimitadores matemáticos.
+"""
+
+ORIENTACAO_PHC = """
+ORIENTAÇÃO PEDAGÓGICO-POLÍTICA OBRIGATÓRIA:
+1. O conhecimento científico/escolar deve ser tratado como um saber sistematizado, produzido
+   historicamente pela humanidade para responder a necessidades concretas de sobrevivência,
+   trabalho e organização social.
+2. A propriedade dos conceitos deve ser apresentada como ferramenta de LEITURA CRÍTICA DA
+   REALIDADE, capacitando os sujeitos (especialmente das classes populares) para o AUTOGOVERNO,
+   a interpretação da sociedade e a tomada de decisão autônoma.
+3. Rompa com a dualidade do ensino: entregue RIGOR TÉCNICO-CIENTÍFICO unido à CONSCIÊNCIA CRÍTICA.
+"""
+
+
 def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
-                       assunto: str, nivel_dificuldade: str = "Intermediário",
-                       codigo_bncc: str = "") -> str:
-    bncc_str = f"com referência à BNCC: {codigo_bncc}" if codigo_bncc else ""
-                           
-    prompt = f""" 
+                        assunto: str, nivel_dificuldade: str = "Intermediário",
+                        codigo_bncc: str = "") -> str:
+    prompt = f"""
     Você é um professor especialista em Didática sob o referencial da
     PEDAGOGIA HISTÓRICO-CRÍTICA e da TEORIA GRAMSCIANA DA HEGEMONIA.
 
@@ -407,23 +431,12 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     - Disciplina: {disciplina}
     - Ano/Série: {ano_escolar}
     - Conteúdo/Assunto: {assunto}
-    {codigo_bncc}
-    -Nível de dificuldade do material:  {nivel_dificuldade}
+    {f"- BNCC: {codigo_bncc}" if codigo_bncc else ""}
+    - Nível de dificuldade: {nivel_dificuldade}
         - Ajuste a profundidade dos conceitos, a complexidade dos problemas e a linguagem pedagógica para o nível {nivel_dificuldade}.
-        - Se {nivel_dificuldade} == Prefeitura Municipal de Casimiro de Abreu: o nível é abaixo do básico.
-        
-    ORIENTAÇÃO PEDAGÓGICO-POLÍTICA OBRIGATÓRIA:
-    1. O conhecimento científico/escolar deve ser tratado como um saber sistematizado, produzido
-       historicamente pela humanidade para responder a necessidades concretas de sobrevivência,
-       trabalho e organização social.
-    2. A propriedade dos conceitos deve ser apresentada como ferramenta de LEITURA CRÍTICA DA
-       REALIDADE, capacitando os sujeitos (especialmente das classes populares) para o AUTOGOVERNO,
-       a interpretação da sociedade e a tomada de decisão autônoma.
-    3. Rompa com a dualidade do ensino: entregue RIGOR TÉCNICO-CIENTÍFICO unido à CONSCIÊNCIA CRÍTICA.
-    4. Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu':
-        Ajuste o nível de maneira que os estudantes possuam muita dificuldade para {ano_escolar}, 
-        pois se trata de um contexto de escola pública do interior do Rio de Janeiro, com salas de aula super lotadas e estudantes com
-        pouco interesse e um contexto familiar delicado.
+        - Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu': o nível é abaixo do básico, contexto de escola pública do interior do RJ, salas lotadas, estudantes com dificuldades e contexto familiar delicado.
+
+    {ORIENTACAO_PHC}
 
     Siga ESTRITAMENTE a estrutura abaixo:
 
@@ -442,37 +455,89 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     # 4. GABARITO COMENTADO E PEDAGÓGICO
     - Resolução passo a passo com justificativa técnica e reflexão pedagógica.
 
-
-REGRAS RIGOROSAS DE FORMATAÇÃO (PROIBIÇÕES E OBRIGAÇÕES):
-- NUNCA deixe explicito, a palavra 'autogoverno', 'pedagogia histórico-crítica' e 'escola pública'
-- NUNCA use blocos de código (triplas crases ```) para formatar texto, exemplos ou matemática.
-- NUNCA escreva notação matemática solta no texto como 3^0, 3^1, x^2. Use SEMPRE a notação LaTeX embutida: $3^0$, $3^1$, $x^2$.
-- Para exibições em listas ou passos organizados, use listas comuns do Markdown (com traço "-") e insira as variáveis/expressões em LaTeX. Exemplo:
-  - Instante $t = 0$: 1 pessoa original ($3^0$)
-  - Instante $t = 1$: 3 novas pessoas ($3^1$)
-- Use LaTeX ($...$) para QUALQUER variável, expressão, fórmula, igualdade ou notação de potência/radiciação no texto (ex: $t = 0$, $x$, $A = l^2$).
-- Expressões matemáticas em destaque (fórmulas, equações em bloco próprio): $$expressão$$ — exemplo: $$M = C \\cdot (1+i)^t$$
-- Use notação LaTeX padrão: \\frac{{num}}{{den}}, \\sqrt{{x}}, \\sqrt[3]{{x}}, x^{{2}}, \\cdot, \\pm, \\leq, \\geq
-- NUNCA coloque números isolados ou texto simples dentro de $ (escreva "3 voltas", "4 lados" normalmente como texto).
-- NÃO use $ para indicar moeda (escreva "reais", "R$" com espaço após o símbolo, ou "BRL").
-- Negrito para termos importantes: **termo**.
-- Texto corrido em português fora dos delimitadores matemáticos.
-"""
+    {REGRAS_FORMATACAO}
+    """
     config = types.GenerateContentConfig(max_output_tokens=8192, temperature=0.7)
     response = client.models.generate_content(
-        model="gemini-3.5-flash-lite", contents=prompt, config=config
+        model="gemini-flash-latest", contents=prompt, config=config
     )
     return response.text
 
 
-# ── INTERFACE ─────────────────────────────────────────────────────────────────
+def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str,
+                          nivel_dificuldade: str, quantidade: int,
+                          tipos: list[str], codigo_bncc: str = "") -> str:
+    """Gera lista de exercícios + gabarito comentado em uma única chamada."""
+
+    # Monta a instrução de tipos
+    mapa_tipos = {
+        "Dissertativos / resolução passo a passo": "dissertativos (resolução passo a passo)",
+        "Múltipla escolha": "múltipla escolha (4 alternativas, A a D)",
+        "Verdadeiro ou Falso": "verdadeiro ou falso (com justificativa obrigatória)",
+    }
+    tipos_str = ", ".join(mapa_tipos[t] for t in tipos if t in mapa_tipos)
+    if not tipos_str:
+        tipos_str = "variados"
+
+    prompt = f"""
+    Você é um professor especialista em Didática sob o referencial da
+    PEDAGOGIA HISTÓRICO-CRÍTICA e da TEORIA GRAMSCIANA DA HEGEMONIA.
+
+    Elabore uma lista de exercícios para:
+    - Disciplina: {disciplina}
+    - Ano/Série: {ano_escolar}
+    - Conteúdo/Assunto: {assunto}
+    {f"- BNCC: {codigo_bncc}" if codigo_bncc else ""}
+    - Nível de dificuldade: {nivel_dificuldade}
+        - Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu': nível abaixo do básico, contexto de escola pública do interior do RJ, salas lotadas, estudantes com dificuldades e contexto familiar delicado.
+
+    QUANTIDADE TOTAL: {quantidade} exercícios.
+    TIPOS DE EXERCÍCIOS A USAR: {tipos_str}.
+    - Distribua os {quantidade} exercícios entre os tipos solicitados de forma equilibrada.
+    - Para múltipla escolha: apresente as alternativas A), B), C), D) em linhas separadas.
+    - Para verdadeiro ou falso: apresente a afirmação e deixe espaço para o aluno responder.
+    - Para dissertativos: enuncie claramente o problema, com dados e o que se pede.
+
+    {ORIENTACAO_PHC}
+
+    PERSPECTIVA DOS EXERCÍCIOS:
+    - Pelo menos 40% dos exercícios devem contextualizar o conteúdo em situações reais da vida
+      das classes populares (trabalho, salário, consumo, saúde, território, política, ambiente).
+    - Os demais podem ser de fixação direta do conteúdo, mas sempre com rigor conceitual.
+    - Em nenhum exercício o conhecimento deve parecer neutro ou descolado da realidade social.
+
+    Siga ESTRITAMENTE a estrutura abaixo:
+
+    # LISTA DE EXERCÍCIOS
+    ## {disciplina} | {ano_escolar} | {assunto}
+
+    [Enumere os exercícios de 1 a {quantidade}. Use "**Exercício N.**" como marcador de cada questão.]
+
+    # GABARITO COMENTADO
+    [Para cada exercício, apresente:]
+    **Exercício N.**
+    - **Resposta:** [resposta objetiva]
+    - **Resolução:** [passo a passo técnico com LaTeX onde necessário]
+    - **Comentário pedagógico PHC:** [reflexão sobre o conhecimento como ferramenta crítica,
+      conectando a resolução à realidade social dos estudantes]
+
+    {REGRAS_FORMATACAO}
+    """
+    config = types.GenerateContentConfig(max_output_tokens=8192, temperature=0.7)
+    response = client.models.generate_content(
+        model="gemini-flash-latest", contents=prompt, config=config
+    )
+    return response.text
+
+
+# ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/teacher.png", width=70)
     st.title("Sobre o Autor")
     st.markdown("**Prof. Me. Eric Souza da Silva**")
     st.caption("Licenciado em Matemática (UERJ), Mestre pelo PROFMAT/UERJ.")
 
-st.title("📚 Gerador de Aulas")
+st.title("📚 Gerador de Aulas PHC")
 st.markdown(
     '<div class="author-card">'
     '<div class="author-name">Prof. Me. Eric Souza da Silva</div>'
@@ -481,102 +546,214 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ── API KEY ───────────────────────────────────────────────────────────────────
 api_key = os.getenv("GEMINI_API_KEY", "")
 if not api_key:
     api_key = st.text_input("🔑 Chave API Gemini:", type="password")
 
-col_disc, col_ano = st.columns(2)
-with col_disc:
-    disciplina = st.text_input("Disciplina", placeholder="Ex: Matemática")
-with col_ano:
-    ano_escolar = st.text_input("Ano / Série", placeholder="Ex: 9º ano")
-
-assunto = st.text_input("Assunto", placeholder="Ex: Potenciação")
-codigo_bncc = st.text_input("🎯 BNCC (opcional)")
-nivel_dificuldade = st.selectbox(
-    "Nível de Dificuldade",
-    [
-        "Básico",
-        "Intermediário",
-        "Avançado",
-        "Prefeitura Municipal de Casimiro de Abreu",
-    ],
-)
-for chave in ("conteudo_md", "ultima_disciplina", "ultimo_ano", "ultimo_assunto", "ultimo_nivel"):
+# ── SESSION STATE ─────────────────────────────────────────────────────────────
+for chave, padrao in [
+    ("conteudo_md", None),
+    ("ultima_disciplina", ""),
+    ("ultimo_ano", ""),
+    ("ultimo_assunto", ""),
+    ("ultimo_nivel", ""),
+    ("exercicios_md", None),
+    ("ex_disciplina", ""),
+    ("ex_ano", ""),
+    ("ex_assunto", ""),
+    ("ex_nivel", ""),
+]:
     if chave not in st.session_state:
-        st.session_state[chave] = None if chave == "conteudo_md" else ""
+        st.session_state[chave] = padrao
 
-# 2. Ação do Botão
-if st.button("✨ Gerar Material Didático"):
-    if not api_key or not disciplina or not ano_escolar or not assunto:
-        st.warning("Preencha todos os campos obrigatórios.")
-    else:
-        try:
-            with st.spinner("🧠 Elaborando material (Gemini Flash)..."):
-                client = get_gemini_client(api_key)
-                st.session_state.conteudo_md = gerar_conteudo_phc(
-                    client=client,
-                    disciplina=disciplina,
-                    ano_escolar=ano_escolar,
-                    assunto=assunto,
-                    nivel_dificuldade=nivel_dificuldade,
-                    codigo_bncc=codigo_bncc,
-                )
-            
-            # Persiste os valores gerados no session_state
-            st.session_state.ultima_disciplina = disciplina
-            st.session_state.ultimo_ano = ano_escolar
-            st.session_state.ultimo_assunto = assunto
-            st.session_state.ultimo_nivel = nivel_dificuldade
-            
-            st.success("✅ Material gerado com sucesso!")
-            
-        except APIError as e:
-            erro_str = str(e)
-            if "429" in erro_str or "RESOURCE_EXHAUSTED" in erro_str:
-                st.warning(
-                    "⏳ **Cota de requisições atingida!**\n\n"
-                    "O serviço gratuito do Gemini atingiu o limite temporário por minuto (RPM). "
-                    "Aguarde cerca de 10 a 15 segundos e clique em **Gerar Material Didático** novamente."
-                )
-            elif "503" in erro_str or "unavailable" in erro_str.lower():
-                st.error("⚠️ O servidor do Gemini está temporariamente ocupado. Tente novamente em instantes.")
-            else:
-                st.error(f"❌ Ocorreu um problema na API Gemini: {e}")
-                
-        except Exception as e:
-            erro_str = str(e)
-            if "429" in erro_str or "RESOURCE_EXHAUSTED" in erro_str:
-                st.warning(
-                    "⏳ **Cota de requisições atingida!**\n\n"
-                    "O serviço gratuito do Gemini atingiu o limite temporário por minuto (RPM). "
-                    "Aguarde cerca de 10 a 15 segundos e clique em **Gerar Material Didático** novamente."
-                )
-            else:
-                st.error(f"❌ Erro inesperado: {e}")
-if st.session_state.conteudo_md:
-    st.divider()
-    with st.expander("📄 Visualizar texto gerado", expanded=True):
-        st.markdown(st.session_state.conteudo_md)
-    st.divider()
+# ── ABAS ─────────────────────────────────────────────────────────────────────
+aba_aula, aba_exercicios = st.tabs(["📖 Plano de Aula", "✏️ Lista de Exercícios"])
 
-    if st.button("🖨️ Gerar PDF"):
-        with st.spinner("⚙️ Renderizando expressões matemáticas via Codecogs..."):
+
+# ════════════════════════════════════════════════════════════════════════════════
+# ABA 1: PLANO DE AULA (código original intacto)
+# ════════════════════════════════════════════════════════════════════════════════
+with aba_aula:
+    col_disc, col_ano = st.columns(2)
+    with col_disc:
+        disciplina = st.text_input("Disciplina", placeholder="Ex: Matemática", key="aula_disc")
+    with col_ano:
+        ano_escolar = st.text_input("Ano / Série", placeholder="Ex: 9º ano", key="aula_ano")
+
+    assunto = st.text_input("Assunto", placeholder="Ex: Potenciação", key="aula_assunto")
+    codigo_bncc = st.text_input("🎯 BNCC (opcional)", key="aula_bncc")
+    nivel_dificuldade = st.selectbox(
+        "Nível de Dificuldade",
+        ["Básico", "Intermediário", "Avançado", "Prefeitura Municipal de Casimiro de Abreu"],
+        key="aula_nivel",
+    )
+
+    if st.button("✨ Gerar Material Didático", key="btn_gerar_aula"):
+        if not api_key or not disciplina or not ano_escolar or not assunto:
+            st.warning("Preencha todos os campos obrigatórios.")
+        else:
             try:
-                pdf_bytes = compilar_pdf(
-                    st.session_state.conteudo_md,
-                    st.session_state.ultima_disciplina,
-                    st.session_state.ultimo_ano,
-                    st.session_state.ultimo_assunto,
-                )
-                st.download_button(
-                    label="⬇️ Baixar PDF",
-                    data=pdf_bytes,
-                    file_name=f"Aula_{st.session_state.ultimo_assunto.replace(' ', '_')}.pdf",
-                    mime="application/pdf",
-                )
-            except Exception as e:
-                st.error(f"❌ Erro ao gerar PDF: {e}")
+                with st.spinner("🧠 Elaborando material (Gemini Flash)..."):
+                    client = get_gemini_client(api_key)
+                    st.session_state.conteudo_md = gerar_conteudo_phc(
+                        client=client,
+                        disciplina=disciplina,
+                        ano_escolar=ano_escolar,
+                        assunto=assunto,
+                        nivel_dificuldade=nivel_dificuldade,
+                        codigo_bncc=codigo_bncc,
+                    )
+                st.session_state.ultima_disciplina = disciplina
+                st.session_state.ultimo_ano = ano_escolar
+                st.session_state.ultimo_assunto = assunto
+                st.session_state.ultimo_nivel = nivel_dificuldade
+                st.success("✅ Material gerado com sucesso!")
+            except (APIError, Exception) as e:
+                _tratar_erro_api(e)
+
+    if st.session_state.conteudo_md:
+        st.divider()
+        with st.expander("📄 Visualizar texto gerado", expanded=True):
+            st.markdown(st.session_state.conteudo_md)
+        st.divider()
+
+        if st.button("🖨️ Gerar PDF", key="btn_pdf_aula"):
+            with st.spinner("⚙️ Renderizando expressões matemáticas via Codecogs..."):
+                try:
+                    pdf_bytes = compilar_pdf(
+                        st.session_state.conteudo_md,
+                        st.session_state.ultima_disciplina,
+                        st.session_state.ultimo_ano,
+                        st.session_state.ultimo_assunto,
+                    )
+                    st.download_button(
+                        label="⬇️ Baixar PDF",
+                        data=pdf_bytes,
+                        file_name=f"Aula_{st.session_state.ultimo_assunto.replace(' ', '_')}.pdf",
+                        mime="application/pdf",
+                        key="dl_pdf_aula",
+                    )
+                except Exception as e:
+                    st.error(f"❌ Erro ao gerar PDF: {e}")
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# ABA 2: LISTA DE EXERCÍCIOS
+# ════════════════════════════════════════════════════════════════════════════════
+with aba_exercicios:
+    st.markdown("#### Configure a lista de exercícios")
+
+    col_disc2, col_ano2 = st.columns(2)
+    with col_disc2:
+        ex_disciplina = st.text_input("Disciplina", placeholder="Ex: Matemática", key="ex_disc")
+    with col_ano2:
+        ex_ano = st.text_input("Ano / Série", placeholder="Ex: 9º ano", key="ex_ano_field")
+
+    ex_assunto = st.text_input("Assunto", placeholder="Ex: Potenciação", key="ex_assunto_field")
+    ex_bncc = st.text_input("🎯 BNCC (opcional)", key="ex_bncc")
+
+    ex_nivel = st.selectbox(
+        "Nível de Dificuldade",
+        ["Básico", "Intermediário", "Avançado", "Prefeitura Municipal de Casimiro de Abreu"],
+        key="ex_nivel_field",
+    )
+
+    ex_quantidade = st.slider(
+        "Quantidade de exercícios",
+        min_value=5,
+        max_value=20,
+        value=10,
+        step=1,
+        key="ex_quantidade",
+    )
+
+    ex_tipos = st.multiselect(
+        "Tipos de exercício",
+        options=[
+            "Dissertativos / resolução passo a passo",
+            "Múltipla escolha",
+            "Verdadeiro ou Falso",
+        ],
+        default=["Dissertativos / resolução passo a passo", "Múltipla escolha"],
+        key="ex_tipos",
+    )
+
+    if st.button("✨ Gerar Lista de Exercícios", key="btn_gerar_ex"):
+        if not api_key or not ex_disciplina or not ex_ano or not ex_assunto:
+            st.warning("Preencha todos os campos obrigatórios.")
+        elif not ex_tipos:
+            st.warning("Selecione ao menos um tipo de exercício.")
+        else:
+            try:
+                with st.spinner(f"🧠 Gerando {ex_quantidade} exercícios (Gemini Flash)..."):
+                    client = get_gemini_client(api_key)
+                    st.session_state.exercicios_md = gerar_exercicios_phc(
+                        client=client,
+                        disciplina=ex_disciplina,
+                        ano_escolar=ex_ano,
+                        assunto=ex_assunto,
+                        nivel_dificuldade=ex_nivel,
+                        quantidade=ex_quantidade,
+                        tipos=ex_tipos,
+                        codigo_bncc=ex_bncc,
+                    )
+                st.session_state.ex_disciplina = ex_disciplina
+                st.session_state.ex_ano = ex_ano
+                st.session_state.ex_assunto = ex_assunto
+                st.session_state.ex_nivel = ex_nivel
+                st.success("✅ Lista gerada com sucesso!")
+            except (APIError, Exception) as e:
+                _tratar_erro_api(e)
+
+    if st.session_state.exercicios_md:
+        st.divider()
+        with st.expander("📄 Visualizar exercícios gerados", expanded=True):
+            st.markdown(st.session_state.exercicios_md)
+        st.divider()
+
+        st.markdown("##### Gerar PDFs")
+        col_pdf1, col_pdf2 = st.columns(2)
+
+        with col_pdf1:
+            if st.button("🖨️ PDF Exercícios (aluno)", key="btn_pdf_ex"):
+                with st.spinner("⚙️ Renderizando PDF de exercícios..."):
+                    try:
+                        pdf_ex = compilar_pdf_exercicios(
+                            st.session_state.exercicios_md,
+                            st.session_state.ex_disciplina,
+                            st.session_state.ex_ano,
+                            st.session_state.ex_assunto,
+                        )
+                        st.download_button(
+                            label="⬇️ Baixar Exercícios (PDF)",
+                            data=pdf_ex,
+                            file_name=f"Exercicios_{st.session_state.ex_assunto.replace(' ', '_')}.pdf",
+                            mime="application/pdf",
+                            key="dl_pdf_ex",
+                        )
+                    except Exception as e:
+                        st.error(f"❌ Erro ao gerar PDF: {e}")
+
+        with col_pdf2:
+            if st.button("🖨️ PDF Gabarito (professor)", key="btn_pdf_gab"):
+                with st.spinner("⚙️ Renderizando PDF do gabarito..."):
+                    try:
+                        pdf_gab = compilar_pdf_gabarito(
+                            st.session_state.exercicios_md,
+                            st.session_state.ex_disciplina,
+                            st.session_state.ex_ano,
+                            st.session_state.ex_assunto,
+                        )
+                        st.download_button(
+                            label="⬇️ Baixar Gabarito (PDF)",
+                            data=pdf_gab,
+                            file_name=f"Gabarito_{st.session_state.ex_assunto.replace(' ', '_')}.pdf",
+                            mime="application/pdf",
+                            key="dl_pdf_gab",
+                        )
+                    except Exception as e:
+                        st.error(f"❌ Erro ao gerar PDF: {e}")
 
 st.markdown(
     '<div class="footer">© Prof. Eric Souza da Silva</div>',
