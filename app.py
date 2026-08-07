@@ -77,7 +77,7 @@ section[data-testid="stSidebar"] .block-container {
 
 /* ===== SOBE O "SOBRE O AUTOR" ===== */
 section[data-testid="stSidebar"] h1:first-of-type {
-    margin-top: -2rem !important;
+    margin-top: -4rem !important;
 }
 
 </style>
