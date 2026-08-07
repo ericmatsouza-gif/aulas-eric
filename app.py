@@ -546,7 +546,6 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/teacher.png", width=70)
     st.title("Sobre o Autor")
     st.markdown("**Prof. Me. Eric Souza da Silva**")
     st.caption("""Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ).
