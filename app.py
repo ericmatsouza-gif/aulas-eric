@@ -12,6 +12,7 @@ from fpdf import FPDF, XPos, YPos
 
 # ── CONFIGURAÇÃO DA PÁGINA ────────────────────────────────────────────────────
 st.set_page_config(page_title="Gerador de Aulas", page_icon="📚", layout="centered")
+
 st.markdown("""
 <style>
 
@@ -73,12 +74,23 @@ section[data-testid="stSidebar"] {
     max-width: 320px !important;
 }
 
+/* ===== AJUSTE DE ALTURA DO TOPO (SEM BLOQUEAR O BOTÃO <<) ===== */
+/* Puxa o conteúdo para cima via container e descola do botão nativo */
+div[data-testid="stSidebarUserContent"] {
+    padding-top: 1rem !important;
+}
 
-/* ===== ESPAÇO NO TOPO ===== */
-section[data-testid="stSidebar"] .block-container {
+section[data-testid="stSidebar"] h1:first-of-type {
+    margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
+/* Garante que o botão << fique na camada superior para receber o clique */
+button[data-testid="stSidebarCollapseButton"],
+div[data-testid="stSidebarHeader"] {
+    z-index: 999999 !important;
+    position: relative !important;
+}
 
 /* ===== NOME DO AUTOR ===== */
 .author-name-sidebar {
@@ -87,7 +99,6 @@ section[data-testid="stSidebar"] .block-container {
 
 </style>
 """, unsafe_allow_html=True)
-
 
 # ── LOCALIZAÇÃO DE FONTES DejaVu ──────────────────────────────────────────────
 def _localizar_fontes_dejavu() -> str:
