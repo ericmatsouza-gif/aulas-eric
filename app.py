@@ -572,10 +572,16 @@ st.markdown("**Prof. Me. Eric Souza da Silva**")
 
 st.markdown(
     """
-    <div style="text-align: justify; line-height: 1.6;">
-
+    <div style="
+        background-color: rgba(128, 128, 128, 0.12);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: justify;
+        line-height: 1.6;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    ">
     O material será elaborado com base na <strong>Pedagogia Histórico-Crítica (PHC)</strong> e no conceito gramsciano de <strong>hegemonia</strong>, articulando o conhecimento escolar à realidade histórica e social dos estudantes. As atividades buscarão superar a simples memorização, promovendo a problematização, a reflexão e a análise crítica dos conteúdos. Dessa forma, o estudante será incentivado a compreender o conhecimento como construção histórica e instrumento para interpretar e transformar a realidade.
-
     </div>
     """,
     unsafe_allow_html=True,
