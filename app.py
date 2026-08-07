@@ -72,7 +72,7 @@ section[data-testid="stSidebar"] > div {
 
 /* ===== REDUZ ESPAÇO NO TOPO ===== */
 section[data-testid="stSidebar"] .block-container {
-    padding-top: 0 !important;
+    padding-top: -2 !important;
 }
 
 /* ===== SOBE O "SOBRE O AUTOR" ===== */
