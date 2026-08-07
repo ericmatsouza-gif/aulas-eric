@@ -552,22 +552,18 @@ with st.sidebar:
     st.markdown(
         """
         <div style="
-            background-color: rgba(128, 128, 128, 0.12);
-            padding: 12px;
-            border-radius: 10px;
             text-align: justify;
+            font-size: 0.8rem;
             line-height: 1.5;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            margin-bottom: 15px;
+            color: rgba(250, 250, 250, 0.65);
         ">
         Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ).
 
-        <br><br>
+        <br>
 
         Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).
 
-        <br><br>
+        <br>
 
         Atua em Educação Matemática, Tecnologias Digitais no Ensino, História da Educação Matemática, Políticas Públicas, Educação Ambiental e Esquemas Colaborativos na Educação.
         </div>
