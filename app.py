@@ -549,13 +549,29 @@ with st.sidebar:
     st.image("https://img.icons8.com/color/96/teacher.png", width=70)
     st.title("Sobre o Autor")
     st.markdown("**Prof. Me. Eric Souza da Silva**")
-    st.caption("Licenciado em Matemática (UERJ), Mestre pelo PROFMAT/UERJ.")
+    st.caption("""Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ).
+
+Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).
+
+Atua em Educação Matemática, Tecnologias Digitais no Ensino, História da Educação Matemática, Políticas Públicas, Educação Ambiental e Esquemas Colaborativos na Educação.""")
+    
+    st.divider()
+    
+    st.markdown("### 📞 Contato & Suporte")
+    st.markdown("📧 **E-mail:** [ericmatsouza@gmail.com](mailto:ericmatsouza@gmail.com)")
+    st.markdown("💬 **WhatsApp:** [(21) 97048-1891](https://wa.me/5521970481891)")
+    
+    # A gracinha sobre o PIX no WhatsApp 😉
+    st.info(
+        "💡 **Dica do Prof:** O número do WhatsApp também funciona como **Chave PIX**! "
+        "Se o gerador te economizou horas de planejamento, o café virtual é sempre bem-vindo! ☕😉"
+    )
 
 st.title("📚 Gerador de Aulas PHC")
 st.markdown(
     '<div class="author-card">'
     '<div class="author-name">Prof. Me. Eric Souza da Silva</div>'
-    '<div class="author-desc">Perspectiva PHC e Hegemonia Gramsciana.</div>'
+    '<div class="author-desc">O material será elaborado com base na Pedagogia Histórico-Crítica (PHC) e no conceito gramsciano de hegemonia, articulando o conhecimento escolar à realidade histórica e social dos estudantes. As atividades buscarão superar a simples memorização, promovendo a problematização, a reflexão e a análise crítica dos conteúdos. Dessa forma, o estudante será incentivado a compreender o conhecimento como construção histórica e instrumento para interpretar e transformar a realidade.</div>'
     '</div>',
     unsafe_allow_html=True,
 )
