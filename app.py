@@ -61,7 +61,6 @@ st.markdown("""
     font-size: 0.85rem;
     color: #7f8c8d;
 }
-
 /* ===== LARGURA DA SIDEBAR ===== */
 section[data-testid="stSidebar"] {
     width: 320px !important;
@@ -71,9 +70,14 @@ section[data-testid="stSidebar"] > div {
     width: 320px !important;
 }
 
-/* ===== REDUZ ESPAÇO NO TOPO DA SIDEBAR ===== */
+/* ===== REDUZ ESPAÇO NO TOPO ===== */
 section[data-testid="stSidebar"] .block-container {
-    padding-top: 0rem !important;
+    padding-top: 0 !important;
+}
+
+/* ===== SOBE O "SOBRE O AUTOR" ===== */
+section[data-testid="stSidebar"] h1:first-of-type {
+    margin-top: -1.5rem !important;
 }
 
 </style>
