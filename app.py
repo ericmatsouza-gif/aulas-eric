@@ -558,8 +558,6 @@ with st.sidebar:
             color: rgba(250, 250, 250, 0.65);
         ">
         Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ).
-
-        <br>
         
 
         Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).
