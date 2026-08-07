@@ -563,7 +563,6 @@ with st.sidebar:
 
         Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).
 
-        <br>
 
         Atua em Educação Matemática, Tecnologias Digitais no Ensino, História da Educação Matemática, Políticas Públicas, Educação Ambiental e Esquemas Colaborativos na Educação.
         </div>
