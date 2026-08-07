@@ -73,7 +73,7 @@ section[data-testid="stSidebar"] > div {
 
 /* ===== REDUZ ESPAÇO NO TOPO DA SIDEBAR ===== */
 section[data-testid="stSidebar"] .block-container {
-    padding-top: 1rem !important;
+    padding-top: 0rem !important;
 }
 
 </style>
