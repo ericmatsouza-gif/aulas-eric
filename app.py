@@ -16,7 +16,6 @@ st.set_page_config(page_title="Gerador de Aulas", page_icon="📚", layout="cent
 st.markdown("""
 <style>
 
-/* ===== BOTÕES ===== */
 .stButton>button {
     width: 100%;
     background-color: #2980b9;
@@ -33,8 +32,6 @@ st.markdown("""
     color: white;
 }
 
-
-/* ===== CARD DO AUTOR ===== */
 .author-card {
     background-color: #f8f9fa;
     border-left: 4px solid #2980b9;
@@ -56,8 +53,6 @@ st.markdown("""
     margin-bottom: 10px;
 }
 
-
-/* ===== RODAPÉ ===== */
 .footer {
     margin-top: 50px;
     padding-top: 20px;
@@ -67,7 +62,6 @@ st.markdown("""
     color: #7f8c8d;
 }
 
-
 /* ===== LARGURA DA SIDEBAR ===== */
 section[data-testid="stSidebar"] {
     width: 320px !important;
@@ -75,6 +69,11 @@ section[data-testid="stSidebar"] {
 
 section[data-testid="stSidebar"] > div {
     width: 320px !important;
+}
+
+/* ===== REDUZ ESPAÇO NO TOPO DA SIDEBAR ===== */
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1rem !important;
 }
 
 </style>
