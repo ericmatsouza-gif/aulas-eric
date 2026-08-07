@@ -15,22 +15,88 @@ st.set_page_config(page_title="Gerador de Aulas", page_icon="📚", layout="cent
 
 st.markdown("""
 <style>
+
+/* ===== BOTÕES ===== */
 .stButton>button {
-    width: 100%; background-color: #2980b9; color: white;
-    font-weight: bold; height: 3.2em; border-radius: 8px;
-    border: none; font-size: 16px;
+    width: 100%;
+    background-color: #2980b9;
+    color: white;
+    font-weight: bold;
+    height: 3.2em;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
 }
-.stButton>button:hover { background-color: #1f6391; color: white; }
+
+.stButton>button:hover {
+    background-color: #1f6391;
+    color: white;
+}
+
+
+/* ===== CARD DO AUTOR ===== */
 .author-card {
-    background-color: #f8f9fa; border-left: 4px solid #2980b9;
-    padding: 15px; border-radius: 6px; margin-bottom: 25px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #2980b9;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 25px;
 }
-.author-name { font-size: 1.1rem; font-weight: bold; color: #1a2a3a; margin-bottom: 4px; }
-.author-desc { font-size: 0.9rem; color: #555; margin-bottom: 10px; }
+
+.author-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #1a2a3a;
+    margin-bottom: 4px;
+}
+
+.author-desc {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+
+/* ===== RODAPÉ ===== */
 .footer {
-    margin-top: 50px; padding-top: 20px; border-top: 1px solid #e0e0e0;
-    text-align: center; font-size: 0.85rem; color: #7f8c8d;
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #7f8c8d;
 }
+
+
+/* ===== LARGURA DA SIDEBAR ===== */
+section[data-testid="stSidebar"] {
+    min-width: 320px !important;
+    max-width: 320px !important;
+}
+
+/* ===== AJUSTE DE ALTURA DO TOPO (SEM BLOQUEAR O BOTÃO <<) ===== */
+/* Puxa o conteúdo para cima via container e descola do botão nativo */
+div[data-testid="stSidebarUserContent"] {
+    padding-top: 1rem !important;
+}
+
+section[data-testid="stSidebar"] h1:first-of-type {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Garante que o botão << fique na camada superior para receber o clique */
+button[data-testid="stSidebarCollapseButton"],
+div[data-testid="stSidebarHeader"] {
+    z-index: 999999 !important;
+    position: relative !important;
+}
+
+/* ===== NOME DO AUTOR ===== */
+.author-name-sidebar {
+    margin-top: -0.8rem;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -417,6 +483,7 @@ ORIENTAÇÃO PEDAGÓGICO-POLÍTICA OBRIGATÓRIA:
    REALIDADE, capacitando os sujeitos (especialmente das classes populares) para o AUTOGOVERNO,
    a interpretação da sociedade e a tomada de decisão autônoma.
 3. Rompa com a dualidade do ensino: entregue RIGOR TÉCNICO-CIENTÍFICO unido à CONSCIÊNCIA CRÍTICA.
+4. NUNCA deixe explicito, a palavra 'autogoverno', 'pedagogia histórico-crítica' e 'escola pública'.
 """
 
 
@@ -459,7 +526,7 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     """
     config = types.GenerateContentConfig(max_output_tokens=8192, temperature=0.7)
     response = client.models.generate_content(
-        model="gemini-flash-latest", contents=prompt, config=config
+        model="gemini-3.5-flash-lite", contents=prompt, config=config
     )
     return response.text
 
@@ -614,24 +681,64 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     """
     config = types.GenerateContentConfig(max_output_tokens=8192, temperature=0.7)
     response = client.models.generate_content(
-        model="gemini-flash-latest", contents=prompt, config=config
+        model="gemini-3.5-flash-lite", contents=prompt, config=config
     )
     return response.text
 
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/teacher.png", width=70)
     st.title("Sobre o Autor")
-    st.markdown("**Prof. Me. Eric Souza da Silva**")
-    st.caption("Licenciado em Matemática (UERJ), Mestre pelo PROFMAT/UERJ.")
+    st.markdown(
+    '<div class="author-name-sidebar"><strong>Prof. Me. Eric Souza da Silva</strong></div>',
+    unsafe_allow_html=True
+)
+
+    st.markdown(
+        """
+        <div style="
+            text-align: justify;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: rgba(250, 250, 250, 0.65);
+        ">
+        Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ). <br><br>
+        Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).<br><br>
+        Atua em Educação Matemática, Tecnologias Digitais no Ensino, História da Educação Matemática, Políticas Públicas, Educação Ambiental e Esquemas Colaborativos na Educação.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.divider()
+
+    st.markdown("### 📞 Contato & Suporte")
+    st.markdown("📧 **E-mail:** [ericmatsouza@gmail.com](mailto:ericmatsouza@gmail.com)")
+    st.markdown("💬 **WhatsApp:** [(21) 97048-1891](https://wa.me/5521970481891)")
+
+    st.info(
+        "💡 **Dica do Prof:** O número do WhatsApp também funciona como **Chave PIX**! "
+        "Se o gerador te economizou horas de planejamento, o café virtual é sempre bem-vindo! ☕😉"
+    )
 
 st.title("📚 Gerador de Aulas PHC")
+
+st.markdown("**Prof. Me. Eric Souza da Silva**")
+
 st.markdown(
-    '<div class="author-card">'
-    '<div class="author-name">Prof. Me. Eric Souza da Silva</div>'
-    '<div class="author-desc">Perspectiva PHC e Hegemonia Gramsciana.</div>'
-    '</div>',
+    """
+    <div style="
+        background-color: rgba(128, 128, 128, 0.12);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: justify;
+        line-height: 1.6;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    ">
+    O material será elaborado com base na <strong>Pedagogia Histórico-Crítica (PHC)</strong> e no conceito gramsciano de <strong>hegemonia</strong>, articulando o conhecimento escolar à realidade histórica e social dos estudantes. As atividades buscarão superar a simples memorização, promovendo a problematização, a reflexão e a análise crítica dos conteúdos. Dessa forma, o estudante será incentivado a compreender o conhecimento como construção histórica e instrumento para interpretar e transformar a realidade.
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
@@ -683,7 +790,7 @@ with aba_aula:
             st.warning("Preencha todos os campos obrigatórios.")
         else:
             try:
-                with st.spinner("🧠 Elaborando material (Gemini Flash)..."):
+                with st.spinner("🧠 Elaborando material..."):
                     client = get_gemini_client(api_key)
                     st.session_state.conteudo_md = gerar_conteudo_phc(
                         client=client,
@@ -775,7 +882,7 @@ with aba_exercicios:
             st.warning("Selecione ao menos um tipo de exercício.")
         else:
             try:
-                with st.spinner(f"🧠 Gerando {ex_quantidade} exercícios (Gemini Flash)..."):
+                with st.spinner(f"🧠 Gerando {ex_quantidade} exercícios..."):
                     client = get_gemini_client(api_key)
                     st.session_state.exercicios_md = gerar_exercicios_phc(
                         client=client,
