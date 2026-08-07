@@ -15,22 +15,68 @@ st.set_page_config(page_title="Gerador de Aulas", page_icon="📚", layout="cent
 
 st.markdown("""
 <style>
+
+/* ===== BOTÕES ===== */
 .stButton>button {
-    width: 100%; background-color: #2980b9; color: white;
-    font-weight: bold; height: 3.2em; border-radius: 8px;
-    border: none; font-size: 16px;
+    width: 100%;
+    background-color: #2980b9;
+    color: white;
+    font-weight: bold;
+    height: 3.2em;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
 }
-.stButton>button:hover { background-color: #1f6391; color: white; }
+
+.stButton>button:hover {
+    background-color: #1f6391;
+    color: white;
+}
+
+
+/* ===== CARD DO AUTOR ===== */
 .author-card {
-    background-color: #f8f9fa; border-left: 4px solid #2980b9;
-    padding: 15px; border-radius: 6px; margin-bottom: 25px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #2980b9;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 25px;
 }
-.author-name { font-size: 1.1rem; font-weight: bold; color: #1a2a3a; margin-bottom: 4px; }
-.author-desc { font-size: 0.9rem; color: #555; margin-bottom: 10px; }
+
+.author-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #1a2a3a;
+    margin-bottom: 4px;
+}
+
+.author-desc {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+
+/* ===== RODAPÉ ===== */
 .footer {
-    margin-top: 50px; padding-top: 20px; border-top: 1px solid #e0e0e0;
-    text-align: center; font-size: 0.85rem; color: #7f8c8d;
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #7f8c8d;
 }
+
+
+/* ===== LARGURA DA SIDEBAR ===== */
+section[data-testid="stSidebar"] {
+    width: 320px !important;
+}
+
+section[data-testid="stSidebar"] > div {
+    width: 320px !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
