@@ -398,10 +398,12 @@ REGRAS_FORMATACAO = """
 REGRAS RIGOROSAS DE FORMATAÇÃO (PROIBIÇÕES E OBRIGAÇÕES):
 - NUNCA use blocos de código (triplas crases ```) para formatar texto, exemplos ou matemática.
 - NUNCA escreva notação matemática solta no texto como 3^0, 3^1, x^2. Use SEMPRE a notação LaTeX embutida: $3^0$, $3^1$, $x^2$.
-- Para exibições em listas ou passos organizados, use listas comuns do Markdown (com traço "-") e insira as variáveis/expressões em LaTeX.
-- Use LaTeX ($...$) para QUALQUER variável, expressão, fórmula, igualdade ou notação de potência/radiciação no texto.
-- Expressões matemáticas em destaque (fórmulas, equações em bloco próprio): $$expressão$$
-- Use notação LaTeX padrão: \\frac{num}{den}, \\sqrt{x}, \\sqrt[3]{x}, x^{2}, \\cdot, \\pm, \\leq, \\geq
+- Para exibições em listas ou passos organizados, use listas comuns do Markdown (com traço "-") e insira as variáveis/expressões em LaTeX. Exemplo:
+  - Instante $t = 0$: 1 pessoa original ($3^0$)
+  - Instante $t = 1$: 3 novas pessoas ($3^1$)
+- Use LaTeX ($...$) para QUALQUER variável, expressão, fórmula, igualdade ou notação de potência/radiciação no texto (ex: $t = 0$, $x$, $A = l^2$).
+- Expressões matemáticas em destaque (fórmulas, equações em bloco próprio): $$expressão$$ — exemplo: $$M = C \\cdot (1+i)^t$$
+- Use notação LaTeX padrão: \\frac{{num}}{{den}}, \\sqrt{{x}}, \\sqrt[3]{{x}}, x^{{2}}, \\cdot, \\pm, \\leq, \\geq
 - NUNCA coloque números isolados ou texto simples dentro de $ (escreva "3 voltas", "4 lados" normalmente como texto).
 - NÃO use $ para indicar moeda (escreva "reais", "R$" com espaço após o símbolo, ou "BRL").
 - Negrito para termos importantes: **termo**.
@@ -417,6 +419,7 @@ ORIENTAÇÃO PEDAGÓGICO-POLÍTICA OBRIGATÓRIA:
    REALIDADE, capacitando os sujeitos (especialmente das classes populares) para o AUTOGOVERNO,
    a interpretação da sociedade e a tomada de decisão autônoma.
 3. Rompa com a dualidade do ensino: entregue RIGOR TÉCNICO-CIENTÍFICO unido à CONSCIÊNCIA CRÍTICA.
+4. NUNCA deixe explicito, a palavra 'autogoverno', 'pedagogia histórico-crítica' e 'escola pública'.
 """
 
 
@@ -501,15 +504,26 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     {ORIENTACAO_PHC}
 
     PERSPECTIVA DOS EXERCÍCIOS:
-    - Pelo menos 40% dos exercícios devem contextualizar o conteúdo em situações reais da vida
-      das classes populares (trabalho, salário, consumo, saúde, território, política, ambiente).
+    - Pelo menos 90% dos exercícios devem contextualizar o conteúdo em situações reais da vida
+      das classes populares (trabalho, salário, consumo, saúde, território, política, ambiente 
+      e questionamento reais contra o capitalismo).
     - Os demais podem ser de fixação direta do conteúdo, mas sempre com rigor conceitual.
     - Em nenhum exercício o conhecimento deve parecer neutro ou descolado da realidade social.
 
     Siga ESTRITAMENTE a estrutura abaixo:
 
     # LISTA DE EXERCÍCIOS
-    ## {disciplina} | {ano_escolar} | {assunto}
+    ## {disciplina} | {ano_escolar} | {assunto}REGRAS RIGOROSAS DE FORMATAÇÃO (PROIBIÇÕES E OBRIGAÇÕES):
+- NUNCA use blocos de código (triplas crases ```) para formatar texto, exemplos ou matemática.
+- NUNCA escreva notação matemática solta no texto como 3^0, 3^1, x^2. Use SEMPRE a notação LaTeX embutida: $3^0$, $3^1$, $x^2$.
+- Para exibições em listas ou passos organizados, use listas comuns do Markdown (com traço "-") e insira as variáveis/expressões em LaTeX.
+- Use LaTeX ($...$) para QUALQUER variável, expressão, fórmula, igualdade ou notação de potência/radiciação no texto.
+- Expressões matemáticas em destaque (fórmulas, equações em bloco próprio): $$expressão$$
+- Use notação LaTeX padrão: \\frac{num}{den}, \\sqrt{x}, \\sqrt[3]{x}, x^{2}, \\cdot, \\pm, \\leq, \\geq
+- NUNCA coloque números isolados ou texto simples dentro de $ (escreva "3 voltas", "4 lados" normalmente como texto).
+- NÃO use $ para indicar moeda (escreva "reais", "R$" com espaço após o símbolo, ou "BRL").
+- Negrito para termos importantes: **termo**.
+- Texto corrido em português fora dos delimitadores matemáticos.
 
     [Enumere os exercícios de 1 a {quantidade}. Use "**Exercício N.**" como marcador de cada questão.]
 
@@ -525,7 +539,7 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     """
     config = types.GenerateContentConfig(max_output_tokens=8192, temperature=0.7)
     response = client.models.generate_content(
-        model="gemini-flash-latest", contents=prompt, config=config
+        model="gemini-3.5-flash-lite", contents=prompt, config=config
     )
     return response.text
 
