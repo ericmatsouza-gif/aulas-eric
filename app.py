@@ -487,9 +487,81 @@ ORIENTAÇÃO PEDAGÓGICO-POLÍTICA OBRIGATÓRIA:
 """
 
 
+def _construir_bloco_localizacao(client, localizacao: str) -> str:
+    """
+    Gera um bloco de contextualização socioespacial para o município/estado informado,
+    baseado em dados do PNAD Contínua TIC (IBGE) e características regionais.
+    O resultado é cacheado na session_state para evitar chamadas redundantes.
+
+    Retorna string pronta para inserção no prompt, ou "" se localizacao for vazia.
+    """
+    if not localizacao or not localizacao.strip():
+        return ""
+
+    chave_cache = localizacao.strip().lower()
+    if chave_cache in st.session_state.contexto_local_cache:
+        return st.session_state.contexto_local_cache[chave_cache]
+
+    prompt_ctx = f"""
+    Você é um pesquisador especializado em dados socioeconômicos do IBGE e da PNAD Contínua TIC.
+    Produza um bloco de contextualização socioespacial CONCISO (máximo 250 palavras) sobre
+    "{localizacao}" (município e/ou estado, Brasil) para subsidiar a elaboração de aulas
+    e exercícios pela perspectiva da Pedagogia Histórico-Crítica (PHC).
+
+    INCLUA obrigatoriamente (com dados reais ou estimativas plausíveis do PNAD Contínua TIC / IBGE):
+    1. Taxa de acesso à internet domiciliar e via celular.
+    2. Proporção de domicílios com computador ou tablet.
+    3. Principais atividades econômicas e perfil do trabalhador local.
+    4. IDH ou IDHM aproximado e posição no estado/país se relevante.
+    5. Um traço histórico ou cultural significativo da localidade.
+    6. Uma situação-problema concreta da realidade local que possa servir de contexto
+       para exercícios matemáticos ou de outras disciplinas.
+
+    FORMATO DE SAÍDA — retorne APENAS o bloco abaixo, sem explicações adicionais:
+
+    CONTEXTO SOCIOESPACIAL — {localizacao}
+    [seu texto aqui]
+    """
+    config = types.GenerateContentConfig(max_output_tokens=512, temperature=0.4)
+    try:
+        resp = client.models.generate_content(
+            model="gemini-3.5-flash-lite", contents=prompt_ctx, config=config
+        )
+        bloco = resp.text.strip()
+    except Exception:
+        bloco = f"CONTEXTO SOCIOESPACIAL — {localizacao}\n(Dados não disponíveis no momento.)"
+
+    st.session_state.contexto_local_cache[chave_cache] = bloco
+    return bloco
+
+
+def _bloco_instrucao_local(localizacao: str) -> str:
+    """
+    Retorna o trecho de instrução que será inserido no prompt principal
+    quando há contextualização socioespacial ativa.
+    """
+    if not localizacao or not localizacao.strip():
+        return ""
+    return f"""
+CONTEXTUALIZAÇÃO SOCIOESPACIAL OBRIGATÓRIA — {localizacao}:
+- Use a realidade concreta de {localizacao} como PRÁTICA SOCIAL INICIAL da aula/exercício:
+  conecte o conteúdo curricular a problemas, dados e características reais desta localidade.
+- Incorpore o contexto socioeconômico, tecnológico e histórico local (acesso à internet,
+  principais atividades econômicas, realidade dos trabalhadores) nas situações-problema e exemplos.
+- Articule a escala LOCAL ({localizacao}) com as escalas REGIONAL (estado) e NACIONAL (Brasil),
+  mostrando como o conhecimento opera nessas três dimensões.
+- Priorize dados e situações verificáveis — PNAD Contínua TIC, IBGE, INEP — quando disponíveis.
+"""
+
+
 def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
                         assunto: str, nivel_dificuldade: str = "Intermediário",
-                        codigo_bncc: str = "") -> str:
+                        codigo_bncc: str = "", localizacao: str = "") -> str:
+
+    # Bloco de contextualização socioespacial (vazio se localizacao não informada)
+    bloco_ctx = _construir_bloco_localizacao(client, localizacao) if localizacao.strip() else ""
+    instrucao_local = _bloco_instrucao_local(localizacao)
+
     prompt = f"""
     Você é um professor especialista em Didática sob o referencial da
     PEDAGOGIA HISTÓRICO-CRÍTICA e da TEORIA GRAMSCIANA DA HEGEMONIA.
@@ -502,14 +574,20 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     - Nível de dificuldade: {nivel_dificuldade}
         - Ajuste a profundidade dos conceitos, a complexidade dos problemas e a linguagem pedagógica para o nível {nivel_dificuldade}.
         - Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu': o nível é abaixo do básico, contexto de escola pública do interior do RJ, salas lotadas, estudantes com dificuldades e contexto familiar delicado.
+    {f"- Localização: {localizacao}" if localizacao.strip() else ""}
 
     {ORIENTACAO_PHC}
+
+    {instrucao_local}
+
+    {bloco_ctx}
 
     Siga ESTRITAMENTE a estrutura abaixo:
 
     # 1. PRÁTICA SOCIAL E GÊNESE HISTÓRICA DO CONTEÚDO
     - Apresente a origem social e a necessidade histórica deste conceito.
     - Aponte a relevância para o mundo contemporâneo (trabalho, economia, política, cidadania).
+    {f"- Conecte à realidade concreta de {localizacao} (veja contexto acima)." if localizacao.strip() else ""}
     - Definição rigorosa, formal e conceitual, com propriedades e leis.
 
     # 2. EXERCÍCIOS DE FIXAÇÃO E DOMÍNIO CONCEITUAL
@@ -517,6 +595,7 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
 
     # 3. DESAFIOS DE LEITURA CRÍTICA E CONTRA-HEGEMONIA
     - Questões contextualizadas em dados reais ou plausíveis da sociedade.
+    {f"- Priorize dados e situações de {localizacao} e seu estado/região." if localizacao.strip() else ""}
     - Exija interpretação, argumentação e decisão crítica com base no conhecimento.
 
     # 4. GABARITO COMENTADO E PEDAGÓGICO
@@ -587,11 +666,16 @@ def _distribuir_exercicios(conteudos: list[str], quantidade: int) -> list[tuple[
 
 def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str,
                           nivel_dificuldade: str, quantidade: int,
-                          tipos: list[str], codigo_bncc: str = "") -> str:
+                          tipos: list[str], codigo_bncc: str = "",
+                          localizacao: str = "") -> str:
     """Gera lista de exercícios + gabarito comentado em uma única chamada.
     Suporta múltiplos conteúdos no campo assunto, separados por vírgula,
     ponto-e-vírgula ou ' - ', distribuindo os exercícios proporcionalmente.
     """
+
+    # ── Contextualização socioespacial (opcional) ─────────────────────────────
+    bloco_ctx = _construir_bloco_localizacao(client, localizacao) if localizacao.strip() else ""
+    instrucao_local = _bloco_instrucao_local(localizacao)
 
     # ── Detecta e distribui conteúdos ────────────────────────────────────────
     conteudos = _detectar_conteudos(assunto)
@@ -643,8 +727,13 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     {f"- BNCC: {codigo_bncc}" if codigo_bncc else ""}
     - Nível de dificuldade: {nivel_dificuldade}
         - Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu': nível abaixo do básico, contexto de escola pública do interior do RJ, salas lotadas, estudantes com dificuldades e contexto familiar delicado.
+    {f"- Localização: {localizacao}" if localizacao.strip() else ""}
 
     {instrucao_conteudos}
+
+    {instrucao_local}
+
+    {bloco_ctx}
 
     TIPOS DE EXERCÍCIOS A USAR: {tipos_str}.
     - Distribua os exercícios entre os tipos solicitados de forma equilibrada dentro de cada conteúdo.
@@ -658,6 +747,7 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     - Pelo menos 90% dos exercícios devem contextualizar o conteúdo em situações reais da vida
       das classes populares (trabalho, salário, consumo, saúde, território, política, ambiente
       e questionamento real contra o capitalismo).
+    {f"- Priorize situações e dados concretos de {localizacao} (veja contexto socioespacial acima)." if localizacao.strip() else ""}
     - Os demais podem ser de fixação direta do conteúdo, mas sempre com rigor conceitual.
     - Em nenhum exercício o conhecimento deve parecer neutro ou descolado da realidade social.
 
@@ -712,6 +802,38 @@ with st.sidebar:
 
     st.divider()
 
+    st.markdown("### 📍 Contextualização Local (opcional)")
+    st.markdown(
+        """
+        <div style="font-size: 0.78rem; color: rgba(250,250,250,0.6); line-height: 1.45; margin-bottom: 8px;">
+        Informe o <strong>município</strong> e/ou <strong>estado</strong> onde a aula será ministrada.
+        Quando preenchido, o material será adaptado à realidade socioespacial local
+        com base nos dados do <em>PNAD Contínua TIC / IBGE</em>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    localizacao_input = st.text_input(
+        "Município / Estado",
+        value=st.session_state.localizacao,
+        placeholder="Ex: Casimiro de Abreu, RJ",
+        key="sidebar_localizacao",
+        label_visibility="collapsed",
+    )
+    if localizacao_input != st.session_state.localizacao:
+        st.session_state.localizacao = localizacao_input
+        # Limpa cache somente se a localização mudar
+        chave = localizacao_input.strip().lower()
+        if chave not in st.session_state.contexto_local_cache:
+            pass  # será gerado sob demanda
+
+    if st.session_state.localizacao.strip():
+        st.success(f"📌 Local ativo: **{st.session_state.localizacao}**")
+    else:
+        st.caption("🔘 Sem contextualização local — modo padrão ativo.")
+
+    st.divider()
+
     st.markdown("### 📞 Contato & Suporte")
     st.markdown("📧 **E-mail:** [ericmatsouza@gmail.com](mailto:ericmatsouza@gmail.com)")
     st.markdown("💬 **WhatsApp:** [(21) 97048-1891](https://wa.me/5521970481891)")
@@ -759,6 +881,8 @@ for chave, padrao in [
     ("ex_ano", ""),
     ("ex_assunto", ""),
     ("ex_nivel", ""),
+    ("localizacao", ""),
+    ("contexto_local_cache", {}),   # {localizacao: texto_contexto}
 ]:
     if chave not in st.session_state:
         st.session_state[chave] = padrao
@@ -771,6 +895,12 @@ aba_aula, aba_exercicios = st.tabs(["📖 Plano de Aula", "✏️ Lista de Exerc
 # ABA 1: PLANO DE AULA (código original intacto)
 # ════════════════════════════════════════════════════════════════════════════════
 with aba_aula:
+    if st.session_state.localizacao.strip():
+        st.info(
+            f"📍 **Contextualização local ativa:** {st.session_state.localizacao} — "
+            "o plano de aula será adaptado à realidade socioespacial desta localidade (PNAD TIC/IBGE)."
+        )
+
     col_disc, col_ano = st.columns(2)
     with col_disc:
         disciplina = st.text_input("Disciplina", placeholder="Ex: Matemática", key="aula_disc")
@@ -799,6 +929,7 @@ with aba_aula:
                         assunto=assunto,
                         nivel_dificuldade=nivel_dificuldade,
                         codigo_bncc=codigo_bncc,
+                        localizacao=st.session_state.localizacao,
                     )
                 st.session_state.ultima_disciplina = disciplina
                 st.session_state.ultimo_ano = ano_escolar
@@ -839,6 +970,11 @@ with aba_aula:
 # ════════════════════════════════════════════════════════════════════════════════
 with aba_exercicios:
     st.markdown("#### Configure a lista de exercícios")
+    if st.session_state.localizacao.strip():
+        st.info(
+            f"📍 **Contextualização local ativa:** {st.session_state.localizacao} — "
+            "os exercícios serão contextualizados na realidade socioespacial desta localidade (PNAD TIC/IBGE)."
+        )
 
     col_disc2, col_ano2 = st.columns(2)
     with col_disc2:
@@ -893,6 +1029,7 @@ with aba_exercicios:
                         quantidade=ex_quantidade,
                         tipos=ex_tipos,
                         codigo_bncc=ex_bncc,
+                        localizacao=st.session_state.localizacao,
                     )
                 st.session_state.ex_disciplina = ex_disciplina
                 st.session_state.ex_ano = ex_ano
