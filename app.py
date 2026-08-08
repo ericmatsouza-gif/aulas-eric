@@ -543,12 +543,12 @@ def _bloco_instrucao_local(localizacao: str) -> str:
     if not localizacao or not localizacao.strip():
         return ""
     loc = localizacao.strip()
-    return (
-        f"CONTEXTUALIZAÇÃO SOCIOESPACIAL OBRIGATÓRIA — {loc}:\n"
-        f"- Use a realidade concreta de {loc} como PRÁTICA SOCIAL INICIAL da aula/exercício:\n"
-        f"  conecte o conteúdo curricular a problemas, dados e características reais desta localidade.\n"
-        f"- Incorpore o contexto socioeconômico, tecnológico e histórico local (acesso à internet,\n"
-        f"  principais atividades econômicas, realidade dos trabalhadores) nas situações-problema e exemplos.\n"
-        f"- Articule a escala LOCAL - {loc} - com as escalas REGIONAL e NACIONAL,\n"
-        f"  mostrando como o conhecimento opera nessas três dimensões.\n"
-        f"- Priorize dados e situações verificáve
+    linhas = [
+        "CONTEXTUALIZACAO SOCIOESPACIAL OBRIGATORIA - " + loc + ":",
+        "- Use a realidade concreta de " + loc + " como PRATICA SOCIAL INICIAL da aula/exercicio:",
+        "  conecte o conteudo curricular a problemas, dados e caracteristicas reais desta localidade.",
+        "- Incorpore o contexto socioeconomico, tecnologico e historico local (acesso a internet,",
+        "  principais atividades economicas, realidade dos trabalhadores) nas situacoes-problema e exemplos.",
+        "- Articule a escala LOCAL - " + loc + " - com as escalas REGIONAL e NACIONAL,",
+        "  mostrando como o conhecimento opera nessas tres dimensoes.",
+        "- Priorize dados e situacoes verif
