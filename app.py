@@ -542,16 +542,13 @@ def _bloco_instrucao_local(localizacao: str) -> str:
     """
     if not localizacao or not localizacao.strip():
         return ""
-    return f"""
-CONTEXTUALIZAÇÃO SOCIOESPACIAL OBRIGATÓRIA — {localizacao}:
-- Use a realidade concreta de {localizacao} como PRÁTICA SOCIAL INICIAL da aula/exercício:
-  conecte o conteúdo curricular a problemas, dados e características reais desta localidade.
-- Incorpore o contexto socioeconômico, tecnológico e histórico local (acesso à internet,
-  principais atividades econômicas, realidade dos trabalhadores) nas situações-problema e exemplos.
-- Articule a escala LOCAL ({localizacao}) com as escalas REGIONAL (estado) e NACIONAL (Brasil),
-  mostrando como o conhecimento opera nessas três dimensões.
-- Priorize dados e situações verificáveis — PNAD Contínua TIC, IBGE, INEP — quando disponíveis.
-"""
-
-
-def gerar_conteudo_phc(cl
+    loc = localizacao.strip()
+    return (
+        f"CONTEXTUALIZAÇÃO SOCIOESPACIAL OBRIGATÓRIA — {loc}:\n"
+        f"- Use a realidade concreta de {loc} como PRÁTICA SOCIAL INICIAL da aula/exercício:\n"
+        f"  conecte o conteúdo curricular a problemas, dados e características reais desta localidade.\n"
+        f"- Incorpore o contexto socioeconômico, tecnológico e histórico local (acesso à internet,\n"
+        f"  principais atividades econômicas, realidade dos trabalhadores) nas situações-problema e exemplos.\n"
+        f"- Articule a escala LOCAL - {loc} - com as escalas REGIONAL e NACIONAL,\n"
+        f"  mostrando como o conhecimento opera nessas três dimensões.\n"
+        f"- Priorize dados e situações verificáve
