@@ -11,12 +11,16 @@ from google.genai.errors import APIError
 from fpdf import FPDF, XPos, YPos
 
 # ── CONFIGURAÇÃO DA PÁGINA ────────────────────────────────────────────────────
-st.set_page_config(page_title="Gerador de Aulas", page_icon="📚", layout="centered")
+st.set_page_config(
+    page_title="Gerador de Aulas",
+    page_icon="📚",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
 
 st.markdown("""
 <style>
-
-/* ===== BOTÕES ===== */
+/* ── Botões ── */
 .stButton>button {
     width: 100%;
     background-color: #2980b9;
@@ -27,76 +31,70 @@ st.markdown("""
     border: none;
     font-size: 16px;
 }
+.stButton>button:hover { background-color: #1f6391; color: white; }
 
-.stButton>button:hover {
-    background-color: #1f6391;
-    color: white;
-}
-
-
-/* ===== CARD DO AUTOR ===== */
+/* ── Card do autor ── */
 .author-card {
     background-color: #f8f9fa;
     border-left: 4px solid #2980b9;
-    padding: 15px;
+    padding: 10px 12px;
     border-radius: 6px;
-    margin-bottom: 25px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
-
 .author-name {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: bold;
     color: #1a2a3a;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
+    line-height: 1.3;
 }
-
 .author-desc {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #555;
-    margin-bottom: 10px;
+    line-height: 1.4;
+    text-align: left;
 }
 
+/* ── Título principal menor no mobile ── */
+h1 { font-size: clamp(1.4rem, 5vw, 2rem) !important; }
 
-/* ===== RODAPÉ ===== */
+/* ── Bloco de texto introdutório (expander, markdown) ── */
+.stMarkdown p {
+    text-align: left !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ── Footer ── */
 .footer {
-    margin-top: 50px;
-    padding-top: 20px;
+    margin-top: 40px;
+    padding-top: 16px;
     border-top: 1px solid #e0e0e0;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: #7f8c8d;
 }
 
-
-/* ===== LARGURA DA SIDEBAR ===== */
-section[data-testid="stSidebar"] {
-    min-width: 320px !important;
-    max-width: 320px !important;
+/* ── Garante que o bloco central não extrapole em telas pequenas ── */
+.block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    max-width: 100% !important;
 }
 
-/* ===== AJUSTE DE ALTURA DO TOPO (SEM BLOQUEAR O BOTÃO <<) ===== */
-/* Puxa o conteúdo para cima via container e descola do botão nativo */
-div[data-testid="stSidebarUserContent"] {
-    padding-top: 1rem !important;
+@media (min-width: 768px) {
+    .block-container {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        max-width: 860px !important;
+    }
+    .author-name { font-size: 1.1rem; }
+    .author-desc { font-size: 0.9rem; }
 }
-
-section[data-testid="stSidebar"] h1:first-of-type {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* Garante que o botão << fique na camada superior para receber o clique */
-button[data-testid="stSidebarCollapseButton"],
-div[data-testid="stSidebarHeader"] {
-    z-index: 999999 !important;
-    position: relative !important;
-}
-
-/* ===== NOME DO AUTOR ===== */
-.author-name-sidebar {
-    margin-top: -0.8rem;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -483,87 +481,12 @@ ORIENTAÇÃO PEDAGÓGICO-POLÍTICA OBRIGATÓRIA:
    REALIDADE, capacitando os sujeitos (especialmente das classes populares) para o AUTOGOVERNO,
    a interpretação da sociedade e a tomada de decisão autônoma.
 3. Rompa com a dualidade do ensino: entregue RIGOR TÉCNICO-CIENTÍFICO unido à CONSCIÊNCIA CRÍTICA.
-4. NUNCA deixe explicito, a palavra 'autogoverno', 'pedagogia histórico-crítica' e 'escola pública'.
 """
-
-
-def _construir_bloco_localizacao(client, localizacao: str) -> str:
-    """
-    Gera um bloco de contextualização socioespacial para o município/estado informado,
-    baseado em dados do PNAD Contínua TIC (IBGE) e características regionais.
-    O resultado é cacheado na session_state para evitar chamadas redundantes.
-
-    Retorna string pronta para inserção no prompt, ou "" se localizacao for vazia.
-    """
-    if not localizacao or not localizacao.strip():
-        return ""
-
-    chave_cache = localizacao.strip().lower()
-    if chave_cache in st.session_state.contexto_local_cache:
-        return st.session_state.contexto_local_cache[chave_cache]
-
-    prompt_ctx = f"""
-    Você é um pesquisador especializado em dados socioeconômicos do IBGE e da PNAD Contínua TIC.
-    Produza um bloco de contextualização socioespacial CONCISO (máximo 250 palavras) sobre
-    "{localizacao}" (município e/ou estado, Brasil) para subsidiar a elaboração de aulas
-    e exercícios pela perspectiva da Pedagogia Histórico-Crítica (PHC).
-
-    INCLUA obrigatoriamente (com dados reais ou estimativas plausíveis do PNAD Contínua TIC / IBGE):
-    1. Taxa de acesso à internet domiciliar e via celular.
-    2. Proporção de domicílios com computador ou tablet.
-    3. Principais atividades econômicas e perfil do trabalhador local.
-    4. IDH ou IDHM aproximado e posição no estado/país se relevante.
-    5. Um traço histórico ou cultural significativo da localidade.
-    6. Uma situação-problema concreta da realidade local que possa servir de contexto
-       para exercícios matemáticos ou de outras disciplinas.
-
-    FORMATO DE SAÍDA — retorne APENAS o bloco abaixo, sem explicações adicionais:
-
-    CONTEXTO SOCIOESPACIAL — {localizacao}
-    [seu texto aqui]
-    """
-    config = types.GenerateContentConfig(max_output_tokens=512, temperature=0.4)
-    try:
-        resp = client.models.generate_content(
-            model="gemini-3.5-flash-lite", contents=prompt_ctx, config=config
-        )
-        bloco = resp.text.strip()
-    except Exception:
-        bloco = f"CONTEXTO SOCIOESPACIAL — {localizacao}\n(Dados não disponíveis no momento.)"
-
-    st.session_state.contexto_local_cache[chave_cache] = bloco
-    return bloco
-
-
-def _bloco_instrucao_local(localizacao: str) -> str:
-    """
-    Retorna o trecho de instrução que será inserido no prompt principal
-    quando há contextualização socioespacial ativa.
-    """
-    if not localizacao or not localizacao.strip():
-        return ""
-    loc = localizacao.strip()
-    linhas = [
-        "CONTEXTUALIZACAO SOCIOESPACIAL OBRIGATORIA - " + loc + ":",
-        "- Use a realidade concreta de " + loc + " como PRATICA SOCIAL INICIAL da aula/exercicio:",
-        "  conecte o conteudo curricular a problemas, dados e caracteristicas reais desta localidade.",
-        "- Incorpore o contexto socioeconomico, tecnologico e historico local (acesso a internet,",
-        "  principais atividades economicas, realidade dos trabalhadores) nas situacoes-problema e exemplos.",
-        "- Articule a escala LOCAL - " + loc + " - com as escalas REGIONAL e NACIONAL,",
-        "  mostrando como o conhecimento opera nessas tres dimensoes.",
-        "- Priorize dados e situacoes verificaveis (PNAD Continua TIC, IBGE, INEP) quando disponiveis.",
-    ]
-    return "\n".join(linhas) + "\n"
 
 
 def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
                         assunto: str, nivel_dificuldade: str = "Intermediário",
-                        codigo_bncc: str = "", localizacao: str = "") -> str:
-
-    # Bloco de contextualização socioespacial (vazio se localizacao não informada)
-    bloco_ctx = _construir_bloco_localizacao(client, localizacao) if localizacao.strip() else ""
-    instrucao_local = _bloco_instrucao_local(localizacao)
-
+                        codigo_bncc: str = "") -> str:
     prompt = f"""
     Você é um professor especialista em Didática sob o referencial da
     PEDAGOGIA HISTÓRICO-CRÍTICA e da TEORIA GRAMSCIANA DA HEGEMONIA.
@@ -576,20 +499,14 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     - Nível de dificuldade: {nivel_dificuldade}
         - Ajuste a profundidade dos conceitos, a complexidade dos problemas e a linguagem pedagógica para o nível {nivel_dificuldade}.
         - Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu': o nível é abaixo do básico, contexto de escola pública do interior do RJ, salas lotadas, estudantes com dificuldades e contexto familiar delicado.
-    {f"- Localização: {localizacao}" if localizacao.strip() else ""}
 
     {ORIENTACAO_PHC}
-
-    {instrucao_local}
-
-    {bloco_ctx}
 
     Siga ESTRITAMENTE a estrutura abaixo:
 
     # 1. PRÁTICA SOCIAL E GÊNESE HISTÓRICA DO CONTEÚDO
     - Apresente a origem social e a necessidade histórica deste conceito.
     - Aponte a relevância para o mundo contemporâneo (trabalho, economia, política, cidadania).
-    {f"- Conecte à realidade concreta de {localizacao} (veja contexto acima)." if localizacao.strip() else ""}
     - Definição rigorosa, formal e conceitual, com propriedades e leis.
 
     # 2. EXERCÍCIOS DE FIXAÇÃO E DOMÍNIO CONCEITUAL
@@ -597,7 +514,6 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
 
     # 3. DESAFIOS DE LEITURA CRÍTICA E CONTRA-HEGEMONIA
     - Questões contextualizadas em dados reais ou plausíveis da sociedade.
-    {f"- Priorize dados e situações de {localizacao} e seu estado/região." if localizacao.strip() else ""}
     - Exija interpretação, argumentação e decisão crítica com base no conhecimento.
 
     # 4. GABARITO COMENTADO E PEDAGÓGICO
@@ -607,7 +523,7 @@ def gerar_conteudo_phc(client, disciplina: str, ano_escolar: str,
     """
     config = types.GenerateContentConfig(max_output_tokens=8192, temperature=0.7)
     response = client.models.generate_content(
-        model="gemini-3.5-flash-lite", contents=prompt, config=config
+        model="gemini-flash-latest", contents=prompt, config=config
     )
     return response.text
 
@@ -668,16 +584,11 @@ def _distribuir_exercicios(conteudos: list[str], quantidade: int) -> list[tuple[
 
 def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str,
                           nivel_dificuldade: str, quantidade: int,
-                          tipos: list[str], codigo_bncc: str = "",
-                          localizacao: str = "") -> str:
+                          tipos: list[str], codigo_bncc: str = "") -> str:
     """Gera lista de exercícios + gabarito comentado em uma única chamada.
     Suporta múltiplos conteúdos no campo assunto, separados por vírgula,
     ponto-e-vírgula ou ' - ', distribuindo os exercícios proporcionalmente.
     """
-
-    # ── Contextualização socioespacial (opcional) ─────────────────────────────
-    bloco_ctx = _construir_bloco_localizacao(client, localizacao) if localizacao.strip() else ""
-    instrucao_local = _bloco_instrucao_local(localizacao)
 
     # ── Detecta e distribui conteúdos ────────────────────────────────────────
     conteudos = _detectar_conteudos(assunto)
@@ -729,13 +640,8 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     {f"- BNCC: {codigo_bncc}" if codigo_bncc else ""}
     - Nível de dificuldade: {nivel_dificuldade}
         - Se {nivel_dificuldade} == 'Prefeitura Municipal de Casimiro de Abreu': nível abaixo do básico, contexto de escola pública do interior do RJ, salas lotadas, estudantes com dificuldades e contexto familiar delicado.
-    {f"- Localização: {localizacao}" if localizacao.strip() else ""}
 
     {instrucao_conteudos}
-
-    {instrucao_local}
-
-    {bloco_ctx}
 
     TIPOS DE EXERCÍCIOS A USAR: {tipos_str}.
     - Distribua os exercícios entre os tipos solicitados de forma equilibrada dentro de cada conteúdo.
@@ -749,7 +655,6 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     - Pelo menos 90% dos exercícios devem contextualizar o conteúdo em situações reais da vida
       das classes populares (trabalho, salário, consumo, saúde, território, política, ambiente
       e questionamento real contra o capitalismo).
-    {f"- Priorize situações e dados concretos de {localizacao} (veja contexto socioespacial acima)." if localizacao.strip() else ""}
     - Os demais podem ser de fixação direta do conteúdo, mas sempre com rigor conceitual.
     - Em nenhum exercício o conhecimento deve parecer neutro ou descolado da realidade social.
 
@@ -773,13 +678,34 @@ def gerar_exercicios_phc(client, disciplina: str, ano_escolar: str, assunto: str
     """
     config = types.GenerateContentConfig(max_output_tokens=8192, temperature=0.7)
     response = client.models.generate_content(
-        model="gemini-3.5-flash-lite", contents=prompt, config=config
+        model="gemini-flash-latest", contents=prompt, config=config
     )
     return response.text
 
 
-# ── SESSION STATE (inicializado antes da sidebar) ─────────────────────────────
-for _chave, _padrao in [
+# ── SIDEBAR ───────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.image("https://img.icons8.com/color/96/teacher.png", width=70)
+    st.title("Sobre o Autor")
+    st.markdown("**Prof. Me. Eric Souza da Silva**")
+    st.caption("Licenciado em Matemática (UERJ), Mestre pelo PROFMAT/UERJ.")
+
+st.title("📚 Gerador de Aulas PHC")
+st.markdown(
+    '<div class="author-card">'
+    '<div class="author-name">Prof. Me. Eric Souza da Silva</div>'
+    '<div class="author-desc">Perspectiva PHC e Hegemonia Gramsciana.</div>'
+    '</div>',
+    unsafe_allow_html=True,
+)
+
+# ── API KEY ───────────────────────────────────────────────────────────────────
+api_key = os.getenv("GEMINI_API_KEY", "")
+if not api_key:
+    api_key = st.text_input("🔑 Chave API Gemini:", type="password")
+
+# ── SESSION STATE ─────────────────────────────────────────────────────────────
+for chave, padrao in [
     ("conteudo_md", None),
     ("ultima_disciplina", ""),
     ("ultimo_ano", ""),
@@ -790,106 +716,10 @@ for _chave, _padrao in [
     ("ex_ano", ""),
     ("ex_assunto", ""),
     ("ex_nivel", ""),
-    ("localizacao", ""),
-    ("contexto_local_cache", {}),
 ]:
-    if _chave not in st.session_state:
-        st.session_state[_chave] = _padrao
+    if chave not in st.session_state:
+        st.session_state[chave] = padrao
 
-# ── SIDEBAR ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.title("Sobre o Autor")
-    st.markdown(
-    '<div class="author-name-sidebar"><strong>Prof. Me. Eric Souza da Silva</strong></div>',
-    unsafe_allow_html=True
-)
-
-    st.markdown(
-        """
-        <div style="
-            text-align: justify;
-            font-size: 0.8rem;
-            line-height: 1.5;
-            color: rgba(250, 250, 250, 0.65);
-        ">
-        Licenciado em Matemática (UERJ), Mestre em Matemática pelo PROFMAT/UERJ e especialista em Tecnologias Digitais Aplicadas ao Ensino (IFRJ). <br><br>
-        Professor de Matemática da Prefeitura de Macaé (Matrícula nº 48.836) e da Prefeitura de Casimiro de Abreu (Matrícula nº 15.035).<br><br>
-        Atua em Educação Matemática, Tecnologias Digitais no Ensino, História da Educação Matemática, Políticas Públicas, Educação Ambiental e Esquemas Colaborativos na Educação.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.divider()
-
-    st.markdown("### 📍 Contextualização Local (opcional)")
-    st.markdown(
-        """
-        <div style="font-size: 0.78rem; color: rgba(250,250,250,0.6); line-height: 1.45; margin-bottom: 8px;">
-        Informe o <strong>município</strong> e/ou <strong>estado</strong> onde a aula será ministrada.
-        Quando preenchido, o material será adaptado à realidade socioespacial local
-        com base nos dados do <em>PNAD Contínua TIC / IBGE</em>.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    localizacao_input = st.text_input(
-        "Município / Estado",
-        value=st.session_state.localizacao,
-        placeholder="Ex: Casimiro de Abreu, RJ",
-        key="sidebar_localizacao",
-        label_visibility="collapsed",
-    )
-    if localizacao_input != st.session_state.localizacao:
-        st.session_state.localizacao = localizacao_input
-        # Limpa cache somente se a localização mudar
-        chave = localizacao_input.strip().lower()
-        if chave not in st.session_state.contexto_local_cache:
-            pass  # será gerado sob demanda
-
-    if st.session_state.localizacao.strip():
-        st.success(f"📌 Local ativo: **{st.session_state.localizacao}**")
-    else:
-        st.caption("🔘 Sem contextualização local — modo padrão ativo.")
-
-    st.divider()
-
-    st.markdown("### 📞 Contato & Suporte")
-    st.markdown("📧 **E-mail:** [ericmatsouza@gmail.com](mailto:ericmatsouza@gmail.com)")
-    st.markdown("💬 **WhatsApp:** [(21) 97048-1891](https://wa.me/5521970481891)")
-
-    st.info(
-        "💡 **Dica do Prof:** O número do WhatsApp também funciona como **Chave PIX**! "
-        "Se o gerador te economizou horas de planejamento, o café virtual é sempre bem-vindo! ☕😉"
-    )
-
-st.title("📚 Gerador de Aulas PHC")
-
-st.markdown("**Prof. Me. Eric Souza da Silva**")
-
-st.markdown(
-    """
-    <div style="
-        background-color: rgba(128, 128, 128, 0.12);
-        padding: 15px;
-        border-radius: 10px;
-        text-align: justify;
-        line-height: 1.6;
-        margin-top: 10px;
-        margin-bottom: 15px;
-    ">
-    O material será elaborado com base na <strong>Pedagogia Histórico-Crítica (PHC)</strong> e no conceito gramsciano de <strong>hegemonia</strong>, articulando o conhecimento escolar à realidade histórica e social dos estudantes. As atividades buscarão superar a simples memorização, promovendo a problematização, a reflexão e a análise crítica dos conteúdos. Dessa forma, o estudante será incentivado a compreender o conhecimento como construção histórica e instrumento para interpretar e transformar a realidade.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ── API KEY ───────────────────────────────────────────────────────────────────
-api_key = os.getenv("GEMINI_API_KEY", "")
-if not api_key:
-    api_key = st.text_input("🔑 Chave API Gemini:", type="password")
-
-# ── SESSION STATE ─────────────────────────────────────────────────────────────
 # ── ABAS ─────────────────────────────────────────────────────────────────────
 aba_aula, aba_exercicios = st.tabs(["📖 Plano de Aula", "✏️ Lista de Exercícios"])
 
@@ -898,12 +728,6 @@ aba_aula, aba_exercicios = st.tabs(["📖 Plano de Aula", "✏️ Lista de Exerc
 # ABA 1: PLANO DE AULA (código original intacto)
 # ════════════════════════════════════════════════════════════════════════════════
 with aba_aula:
-    if st.session_state.localizacao.strip():
-        st.info(
-            f"📍 **Contextualização local ativa:** {st.session_state.localizacao} — "
-            "o plano de aula será adaptado à realidade socioespacial desta localidade (PNAD TIC/IBGE)."
-        )
-
     col_disc, col_ano = st.columns(2)
     with col_disc:
         disciplina = st.text_input("Disciplina", placeholder="Ex: Matemática", key="aula_disc")
@@ -923,7 +747,7 @@ with aba_aula:
             st.warning("Preencha todos os campos obrigatórios.")
         else:
             try:
-                with st.spinner("🧠 Elaborando material..."):
+                with st.spinner("🧠 Elaborando material (Gemini Flash)..."):
                     client = get_gemini_client(api_key)
                     st.session_state.conteudo_md = gerar_conteudo_phc(
                         client=client,
@@ -932,7 +756,6 @@ with aba_aula:
                         assunto=assunto,
                         nivel_dificuldade=nivel_dificuldade,
                         codigo_bncc=codigo_bncc,
-                        localizacao=st.session_state.localizacao,
                     )
                 st.session_state.ultima_disciplina = disciplina
                 st.session_state.ultimo_ano = ano_escolar
@@ -973,11 +796,6 @@ with aba_aula:
 # ════════════════════════════════════════════════════════════════════════════════
 with aba_exercicios:
     st.markdown("#### Configure a lista de exercícios")
-    if st.session_state.localizacao.strip():
-        st.info(
-            f"📍 **Contextualização local ativa:** {st.session_state.localizacao} — "
-            "os exercícios serão contextualizados na realidade socioespacial desta localidade (PNAD TIC/IBGE)."
-        )
 
     col_disc2, col_ano2 = st.columns(2)
     with col_disc2:
@@ -1021,7 +839,7 @@ with aba_exercicios:
             st.warning("Selecione ao menos um tipo de exercício.")
         else:
             try:
-                with st.spinner(f"🧠 Gerando {ex_quantidade} exercícios..."):
+                with st.spinner(f"🧠 Gerando {ex_quantidade} exercícios (Gemini Flash)..."):
                     client = get_gemini_client(api_key)
                     st.session_state.exercicios_md = gerar_exercicios_phc(
                         client=client,
@@ -1032,7 +850,6 @@ with aba_exercicios:
                         quantidade=ex_quantidade,
                         tipos=ex_tipos,
                         codigo_bncc=ex_bncc,
-                        localizacao=st.session_state.localizacao,
                     )
                 st.session_state.ex_disciplina = ex_disciplina
                 st.session_state.ex_ano = ex_ano
